@@ -5,7 +5,7 @@ Set-Location $Root
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  Sumaya Resto — Full Deploy Setup" -ForegroundColor Cyan
+Write-Host "  Sumaya Resto - Full Deploy Setup" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -38,6 +38,8 @@ try {
 
 # 4. ngrok
 Write-Host "[4/5] PostgreSQL tunnel..." -ForegroundColor Yellow
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" +
+            [System.Environment]::GetEnvironmentVariable("Path", "User")
 $ngrok = Get-Command ngrok -ErrorAction SilentlyContinue
 if (-not $ngrok) {
     Write-Host "  ngrok not found. Run: .\scripts\install-tools.ps1" -ForegroundColor Red
@@ -45,7 +47,9 @@ if (-not $ngrok) {
     $existing = $null
     try {
         $existing = Invoke-RestMethod -Uri "http://127.0.0.1:4040/api/tunnels" -TimeoutSec 2
-    } catch { }
+    } catch {
+        # ngrok not running yet
+    }
 
     if ($existing -and ($existing.tunnels | Where-Object { $_.proto -eq "tcp" })) {
         Write-Host "  Tunnel already running." -ForegroundColor Green
@@ -59,13 +63,18 @@ if (-not $ngrok) {
             Start-Sleep -Seconds 2
             try {
                 $t = Invoke-RestMethod -Uri "http://127.0.0.1:4040/api/tunnels" -TimeoutSec 2
-                if ($t.tunnels | Where-Object { $_.proto -eq "tcp" }) { $ready = $true; break }
-            } catch { }
+                if ($t.tunnels | Where-Object { $_.proto -eq "tcp" }) {
+                    $ready = $true
+                    break
+                }
+            } catch {
+                # still starting
+            }
         }
         if ($ready) {
             & "$PSScriptRoot\get-tunnel-url.ps1"
         } else {
-            Write-Host "  Tunnel starting — run .\scripts\get-tunnel-url.ps1 when ngrok shows Forwarding" -ForegroundColor Yellow
+            Write-Host "  Tunnel starting - run .\scripts\get-tunnel-url.ps1 when ngrok shows Forwarding" -ForegroundColor Yellow
         }
     }
 }
@@ -74,10 +83,10 @@ if (-not $ngrok) {
 Write-Host ""
 Write-Host "[5/5] Render deploy checklist" -ForegroundColor Yellow
 Write-Host ""
-Write-Host "  1. https://dashboard.render.com → New → Blueprint" -ForegroundColor White
+Write-Host "  1. https://dashboard.render.com - New - Blueprint" -ForegroundColor White
 Write-Host "  2. Connect: github.com/mayankmehta1610/sumayarestro" -ForegroundColor White
 Write-Host "  3. On sumaya-api set DATABASE_URL (from tunnel output above)" -ForegroundColor White
-Write-Host "  4. Deploy — CORS + VITE_API_URL are pre-set in render.yaml" -ForegroundColor White
+Write-Host "  4. Deploy - CORS + VITE_API_URL are pre-set in render.yaml" -ForegroundColor White
 Write-Host "  5. Verify: https://sumaya-api.onrender.com/health" -ForegroundColor White
 Write-Host "  6. Open:  https://sumaya-web.onrender.com/r/spice-garden/login" -ForegroundColor White
 Write-Host ""
