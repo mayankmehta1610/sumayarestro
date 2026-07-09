@@ -203,6 +203,12 @@ async def seed(force: bool = False):
                     code=f"WELCOME10-{bdata['code']}", discount_type="percent",
                     discount_value=10.0, min_order_amount=200.0, max_uses=1000,
                 ))
+                if t["slug"] == "spice-garden" and bdata["code"] == "BR-001":
+                    db.add(Coupon(
+                        restaurant_id=restaurant.id, branch_id=branch.id,
+                        code="SPICE10", discount_type="percent",
+                        discount_value=10.0, min_order_amount=100.0, max_uses=5000,
+                    ))
 
             for i, offer in enumerate(brand.get("offers", [])):
                 from app.models import CmsContent
