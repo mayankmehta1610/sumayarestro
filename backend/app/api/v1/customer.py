@@ -241,6 +241,12 @@ async def customer_place_order(
     order.order_status = "confirmed"
     await db.flush()
 
+    from app.services.notifications import notify_order_event
+    await notify_order_event(
+        db, order=order, event_type="order_placed",
+        title="Order confirmed", message=f"Your order {order.order_number} was sent to the kitchen",
+    )
+
     return {
         "id": str(order.id),
         "order_number": order.order_number,

@@ -40,6 +40,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: 'inventory', label: 'Inventory', icon: Warehouse, path: 'inventory', roles: ['inventory_manager', 'branch_manager', 'restaurant_owner'] },
   { id: 'suppliers', label: 'Suppliers', icon: Package, path: 'suppliers', roles: ['supplier_manager', 'inventory_manager', 'restaurant_owner'] },
   { id: 'delivery', label: 'Delivery', icon: Truck, path: 'delivery', roles: ['delivery_operator', 'branch_manager', 'restaurant_owner'] },
+  { id: 'waitlist', label: 'Waitlist', icon: Users, path: 'waitlist', roles: ['restaurant_owner', 'branch_manager', 'waiter'] },
   { id: 'reservations', label: 'Reservations', icon: Calendar, path: 'reservations', roles: ['branch_manager', 'restaurant_owner', 'waiter'] },
   { id: 'reports', label: 'Reports', icon: BarChart3, path: 'reports', roles: ['restaurant_owner', 'branch_manager'] },
   { id: 'finance', label: 'Finance', icon: BarChart3, path: 'finance', roles: ['restaurant_owner', 'branch_manager', 'cashier'] },
@@ -49,6 +50,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: 'audit', label: 'Audit', icon: Shield, path: 'audit', roles: ['super_admin', 'support_admin'] },
   { id: 'order-online', label: 'Order Food', icon: ShoppingBag, path: 'order', roles: ['customer'] },
   { id: 'my-orders', label: 'My Orders', icon: Receipt, path: 'my-orders', roles: ['customer'] },
+  { id: 'join-queue', label: 'Join Queue', icon: Users, path: 'queue', roles: ['customer'] },
 ];
 
 export function getNavForRole(role: string): NavItem[] {

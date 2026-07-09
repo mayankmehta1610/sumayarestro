@@ -47,6 +47,7 @@ from app.models.entities import (
     Tenant,
     TenantInvoice,
     User,
+    WaitlistEntry,
     Wastage,
     WebhookEndpoint,
 )
@@ -96,6 +97,7 @@ __all__ = [
     "SubscriptionPlan",
     "TenantInvoice",
     "Notification",
+    "WaitlistEntry",
     "DeviceSession",
     "PrinterJob",
     "CmsContent",

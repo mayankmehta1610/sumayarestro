@@ -102,6 +102,8 @@ async def seed(force: bool = False):
         await db.flush()
 
         slug_to_ids: dict[str, dict] = {}
+        menu_items_by_branch: dict = {}
+        tables_by_branch: dict = {}
 
         for demo in DEMO_DATA:
             t = demo["tenant"]
@@ -164,6 +166,11 @@ async def seed(force: bool = False):
                         price=MENU_PRICES.get(item_name, 200),
                         is_veg=item_name not in ("Fish Curry", "Prawns Fry"), kitchen_station="main",
                     ))
+                await db.flush()
+                mi = await db.execute(select(MenuItem).where(MenuItem.branch_id == branch.id))
+                menu_items_by_branch[branch.id] = list(mi.scalars().all())
+                tb = await db.execute(select(Table).where(Table.branch_id == branch.id).limit(20))
+                tables_by_branch[branch.id] = list(tb.scalars().all())
 
                 for ing_name in ["Rice", "Oil", "Spices", "Vegetables"]:
                     db.add(Ingredient(
@@ -192,6 +199,9 @@ async def seed(force: bool = False):
                     loyalty_points=100, tier="bronze",
                     restaurant_id=restaurant_id, branch_id=branch_id,
                 ))
+
+        from seed_bulk import seed_bulk_data
+        await seed_bulk_data(db, slug_to_ids, menu_items_by_branch, tables_by_branch)
 
         await db.commit()
         print("Database seeded successfully!")

@@ -466,6 +466,24 @@ class Notification(Base, TenantMixin):
     message: Mapped[str] = mapped_column(Text)
     channel: Mapped[str] = mapped_column(String(30), default="in_app")
     is_read: Mapped[bool] = mapped_column(Boolean, default=False)
+    event_type: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
+    reference_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    target_role: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
+
+
+class WaitlistEntry(Base, TenantMixin):
+    __tablename__ = "waitlist_entries"
+    customer_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("customers.id"), nullable=True)
+    guest_name: Mapped[str] = mapped_column(String(255))
+    guest_phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    party_size: Mapped[int] = mapped_column(Integer, default=2)
+    queue_number: Mapped[int] = mapped_column(Integer, index=True)
+    waitlist_status: Mapped[str] = mapped_column(String(30), default="waiting", index=True)
+    table_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("tables.id"), nullable=True)
+    estimated_wait_mins: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    called_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    seated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class DeviceSession(Base, TenantMixin):

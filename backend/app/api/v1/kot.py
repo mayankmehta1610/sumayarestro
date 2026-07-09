@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_current_user, require_roles
 from app.core.database import get_db
 from app.models import KotTicket, OrderHeader, OrderLine
+from app.services.notifications import notify_order_event
 
 router = APIRouter(prefix="/kot", tags=["kot"])
 
@@ -100,6 +101,19 @@ async def advance_kot(
                 line.line_status = "served"
 
     await db.flush()
+
+    if order:
+        status_messages = {
+            "preparing": ("Order in preparation", f"{order.order_number} is being prepared in the kitchen"),
+            "ready": ("Order ready to serve", f"{order.order_number} is ready — please serve the guest"),
+            "served": ("Order served", f"{order.order_number} has been served"),
+        }
+        if next_status in status_messages:
+            title, msg = status_messages[next_status]
+            await notify_order_event(
+                db, order=order, event_type=next_status, title=title, message=msg,
+            )
+
     return {
         "id": str(kot.id),
         "kot_status": kot.kot_status,

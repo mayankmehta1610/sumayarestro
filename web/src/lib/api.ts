@@ -149,3 +149,68 @@ export async function createPayment(payload: Record<string, unknown>) {
   const { data } = await api.post('/payments/create', payload);
   return data;
 }
+
+export async function updateOrderStatus(orderId: string, order_status: string) {
+  const { data } = await api.patch(`/orders/status/${orderId}`, { order_status });
+  return data;
+}
+
+export async function getMyNotifications(unreadOnly = false) {
+  const { data } = await api.get('/notifications/mine', { params: { unread_only: unreadOnly } });
+  return data;
+}
+
+export async function getUnreadCount() {
+  const { data } = await api.get('/notifications/unread-count');
+  return data;
+}
+
+export async function markNotificationsRead(ids?: string[]) {
+  const { data } = await api.patch('/notifications/mark-read', { notification_ids: ids });
+  return data;
+}
+
+export async function getWaitlistQueue(branchId?: string) {
+  const { data } = await api.get('/waitlist/queue', { params: branchId ? { branch_id: branchId } : {} });
+  return data;
+}
+
+export async function joinWaitlist(payload: Record<string, unknown>) {
+  const { data } = await api.post('/waitlist/join', payload);
+  return data;
+}
+
+export async function callNextGuest(branchId?: string) {
+  const { data } = await api.patch('/waitlist/call-next', null, { params: branchId ? { branch_id: branchId } : {} });
+  return data;
+}
+
+export async function seatWaitlistGuest(entryId: string, tableId: string) {
+  const { data } = await api.patch(`/waitlist/${entryId}/seat`, { table_id: tableId });
+  return data;
+}
+
+export async function checkQueueStatus(queueNumber: number, branchId: string) {
+  const { data } = await api.get(`/waitlist/status/${queueNumber}`, { params: { branch_id: branchId } });
+  return data;
+}
+
+export async function getTodayReservations(branchId?: string) {
+  const { data } = await api.get('/reservations/today', { params: branchId ? { branch_id: branchId } : {} });
+  return data;
+}
+
+export async function bookReservation(payload: Record<string, unknown>) {
+  const { data } = await api.post('/reservations/book', payload);
+  return data;
+}
+
+export async function checkInReservation(reservationId: string, tableId?: string) {
+  const { data } = await api.patch(`/reservations/${reservationId}/check-in`, null, { params: tableId ? { table_id: tableId } : {} });
+  return data;
+}
+
+export async function cancelReservation(reservationId: string) {
+  const { data } = await api.patch(`/reservations/${reservationId}/cancel`);
+  return data;
+}

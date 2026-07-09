@@ -3,6 +3,7 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 import { Menu, X, LogOut, MapPin } from 'lucide-react';
 import { getNavForRole, ROLE_LABELS } from '../config/roles';
 import { useAuth } from '../context/AuthContext';
+import NotificationBell from './NotificationBell';
 import clsx from 'clsx';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -62,6 +63,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </button>
           <Link to="/" className="hidden text-xs text-coffee/50 hover:text-chili sm:block">Sumaya Platform</Link>
           <div className="flex-1" />
+          <NotificationBell />
           <div className="flex items-center gap-3">
             <div className="hidden text-right sm:block">
               <p className="text-sm font-semibold text-espresso">{user?.full_name}</p>

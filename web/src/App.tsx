@@ -17,6 +17,9 @@ import OrderTrackPage from './pages/OrderTrackPage';
 import CustomerOrderPage from './pages/CustomerOrderPage';
 import CustomerOrdersPage from './pages/CustomerOrdersPage';
 import ModuleCrudPage from './pages/ModuleCrudPage';
+import ReservationsPage from './pages/ReservationsPage';
+import WaitlistPage from './pages/WaitlistPage';
+import CustomerQueuePage from './pages/CustomerQueuePage';
 import LoginPage from './pages/LoginPage';
 
 const qc = new QueryClient();
@@ -56,7 +59,9 @@ function RestaurantRoutes() {
         <Route path="inventory" element={<ModuleCrudPage moduleId="inventory" title="Inventory" />} />
         <Route path="suppliers" element={<ModuleCrudPage moduleId="suppliers" title="Suppliers" />} />
         <Route path="delivery" element={<ModuleCrudPage moduleId="delivery" title="Delivery" />} />
-        <Route path="reservations" element={<ModuleCrudPage moduleId="reservations" title="Reservations" />} />
+        <Route path="waitlist" element={<WaitlistPage />} />
+        <Route path="reservations" element={<ReservationsPage />} />
+        <Route path="queue" element={<CustomerQueuePage />} />
         <Route path="reports" element={<DashboardPage />} />
         <Route path="finance" element={<ModuleCrudPage moduleId="finance" title="Finance" />} />
         <Route path="cms" element={<ModuleCrudPage moduleId="cms" title="CMS" />} />

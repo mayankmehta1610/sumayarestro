@@ -12,6 +12,7 @@ from app.core.database import get_db
 from app.models import Branch, Coupon, KotTicket, MenuItem, OrderHeader, OrderLine, Table
 from app.schemas.common import apply_tenant_filter, get_or_404, paginate
 from app.schemas.entities import OrderCreate, OrderResponse, OrderUpdate, OrderLineResponse
+from app.services.notifications import notify_order_event
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
@@ -159,6 +160,15 @@ async def create_order(
     db.add(kot)
     order.order_status = "confirmed"
     await db.flush()
+
+    await notify_order_event(
+        db,
+        order=order,
+        event_type="order_placed",
+        title="New order received",
+        message=f"{order.order_number} placed — {len(order_lines)} items sent to kitchen",
+    )
+
     await db.refresh(order)
 
     resp = OrderResponse.model_validate(order)
@@ -212,7 +222,39 @@ async def update_order_status(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
 ):
-    return await update_order(order_id, payload, db, user)
+    order = await get_or_404(db, OrderHeader, order_id, user)
+    old_status = order.order_status
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(order, key, value)
+    if payload.order_status == "completed" and order.table_id:
+        table = await db.get(Table, order.table_id)
+        if table:
+            table.table_status = "available"
+    order.updated_by = UUID(user["id"])
+    await db.flush()
+
+    if payload.order_status and payload.order_status != old_status:
+        labels = {
+            "confirmed": "Order confirmed",
+            "preparing": "In preparation",
+            "ready": "Ready for serving",
+            "served": "Served",
+            "completed": "Order completed",
+            "cancelled": "Order cancelled",
+        }
+        await notify_order_event(
+            db,
+            order=order,
+            event_type=payload.order_status,
+            title=labels.get(payload.order_status, "Order updated"),
+            message=f"{order.order_number} is now {payload.order_status.replace('_', ' ')}",
+        )
+
+    await db.refresh(order)
+    lines_result = await db.execute(select(OrderLine).where(OrderLine.order_id == order.id))
+    resp = OrderResponse.model_validate(order)
+    resp.lines = [OrderLineResponse.model_validate(l) for l in lines_result.scalars().all()]
+    return resp
 
 
 @router.get("/track/{order_id}")
