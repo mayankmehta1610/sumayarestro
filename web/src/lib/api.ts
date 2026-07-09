@@ -38,7 +38,7 @@ export async function restaurantLogin(email: string, password: string, restauran
   return data;
 }
 
-export async function customerRegister(payload: Record<string, unknown>) {
+export async function customerRegister(payload: { full_name: string; email: string; phone: string; password: string; restaurant_slug?: string }) {
   const { data } = await api.post('/customer/register', payload);
   localStorage.setItem('sumaya_token', data.access_token);
   localStorage.setItem('sumaya_user', JSON.stringify(data.user));

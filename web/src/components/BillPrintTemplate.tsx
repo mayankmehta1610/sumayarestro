@@ -35,7 +35,7 @@ export default function BillPrintTemplate({ receipt, onClose }: { receipt: Recor
             <tbody>
               {lines.map((l, i) => (
                 <tr key={i}>
-                  <td>{String(l.item_name)} x{l.quantity}</td>
+                  <td>{String(l.item_name)} x{Number(l.quantity)}</td>
                   <td className="text-right">₹{Number(l.line_total).toFixed(2)}</td>
                 </tr>
               ))}

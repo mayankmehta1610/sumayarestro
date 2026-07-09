@@ -178,7 +178,13 @@ async def seed_bulk_data(db, slug_to_ids: dict, menu_items_by_branch: dict, tabl
         item = menu_items[i % len(menu_items)]
         table = tables[i % len(tables)] if tables else None
         gross = item.price * (i % 3 + 1)
-        tax = gross * 0.05
+        discount = gross * 0.1 if i % 4 == 0 else 0
+        taxable = gross - discount
+        service = round(taxable * 0.05, 2)
+        cgst = round((taxable + service) * 0.025, 2)
+        sgst = cgst
+        tax = cgst + sgst
+        net = round(taxable + service + tax, 2)
         order = OrderHeader(
             restaurant_id=rid, branch_id=bid,
             order_number=f"ORD-DEMO-{i + 1:04d}",
@@ -187,8 +193,11 @@ async def seed_bulk_data(db, slug_to_ids: dict, menu_items_by_branch: dict, tabl
             customer_id=customers[i % len(customers)].id if customers else None,
             waiter_id=waiter.id if waiter else None,
             order_status=order_statuses[i],
-            gross_amount=gross, discount_amount=0, tax_amount=tax, net_amount=gross + tax,
-            payment_status="paid" if order_statuses[i] == "completed" else "unpaid",
+            gross_amount=gross, discount_amount=discount, service_charge_amount=service,
+            tax_amount=tax, net_amount=net,
+            tax_breakdown={"cgst": cgst, "sgst": sgst, "service_charge": service},
+            payment_status="paid" if i >= 6 else "unpaid",
+            coupon_code="SPICE10" if i % 4 == 0 else None,
             notes=f"Demo order {i + 1}",
         )
         db.add(order)

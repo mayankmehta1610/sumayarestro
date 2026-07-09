@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Plus, Minus, QrCode } from 'lucide-react';
-import { api, getPublicMenu, customerPlaceOrder } from '../lib/api';
+import { api, getPublicMenu } from '../lib/api';
 import BillSummary from '../components/BillSummary';
 
 interface CartItem { id: string; name: string; price: number; qty: number; }
@@ -21,7 +21,6 @@ export default function QROrderPage() {
   });
 
   const branchId = qrData?.branch?.id;
-  const tableId = qrData?.table?.id;
 
   const { data: menu } = useQuery({
     queryKey: ['qr-menu', branchId],
@@ -83,7 +82,7 @@ export default function QROrderPage() {
       <div className="mx-auto max-w-4xl p-6 grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4">
           <input className="input" placeholder="Your name (optional)" value={guestName} onChange={(e) => setGuestName(e.target.value)} />
-          {(menu?.categories || []).flatMap((cat: { items: Array<{ id: string; name: string; price: number }> }) => cat.items).map((item) => (
+          {(menu?.categories || []).flatMap((cat: { items: Array<{ id: string; name: string; price: number }> }) => cat.items).map((item: { id: string; name: string; price: number }) => (
             <button key={item.id} onClick={() => addItem(item)} className="card w-full text-left flex justify-between">
               <span>{item.name}</span>
               <span className="font-bold text-chili">₹{item.price}</span>
