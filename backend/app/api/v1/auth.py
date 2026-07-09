@@ -12,7 +12,7 @@ from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.core.rbac import get_modules_for_role
 from app.core.security import create_access_token, hash_password, verify_password
-from app.models import Branch, Restaurant, Tenant, User
+from app.models import Branch, Coupon, CmsContent, MenuCategory, MenuItem, Restaurant, Tenant, User
 from app.schemas.entities import LoginRequest, RegisterRequest, TokenResponse
 
 
@@ -185,6 +185,43 @@ async def get_public_restaurant(slug: str, db: AsyncSession = Depends(get_db)):
         select(Branch).where(Branch.restaurant_id == restaurant.id, Branch.status == "active")
     )
     branches = branches_result.scalars().all()
+
+    coupons_result = await db.execute(
+        select(Coupon).where(Coupon.restaurant_id == restaurant.id, Coupon.status == "active").limit(5)
+    )
+    coupons = coupons_result.scalars().all()
+
+    cms_result = await db.execute(
+        select(CmsContent).where(
+            CmsContent.restaurant_id == restaurant.id,
+            CmsContent.is_published == True,
+            CmsContent.status == "active",
+        ).limit(10)
+    )
+    cms_pages = cms_result.scalars().all()
+
+    featured_items = []
+    for branch in branches[:1]:
+        items_result = await db.execute(
+            select(MenuItem).where(
+                MenuItem.branch_id == branch.id,
+                MenuItem.is_available == True,
+                MenuItem.status == "active",
+            ).limit(8)
+        )
+        for item in items_result.scalars().all():
+            featured_items.append({
+                "id": str(item.id),
+                "name": item.name,
+                "description": item.description,
+                "price": item.price,
+                "image_url": item.image_url,
+                "is_veg": item.is_veg,
+                "branch_id": str(branch.id),
+            })
+
+    settings = tenant.settings or {}
+
     return {
         "tenant": {
             "id": str(tenant.id),
@@ -194,6 +231,10 @@ async def get_public_restaurant(slug: str, db: AsyncSession = Depends(get_db)):
             "primary_color": tenant.primary_color,
             "secondary_color": tenant.secondary_color,
             "logo_url": tenant.logo_url,
+            "tagline": settings.get("tagline"),
+            "hero_image": settings.get("hero_image"),
+            "gallery": settings.get("gallery", []),
+            "offers": settings.get("offers", []),
         },
         "restaurant": {
             "id": str(restaurant.id),
@@ -211,4 +252,15 @@ async def get_public_restaurant(slug: str, db: AsyncSession = Depends(get_db)):
             }
             for b in branches
         ],
+        "offers": [
+            {
+                "code": c.code,
+                "discount_type": c.discount_type,
+                "discount_value": c.discount_value,
+                "min_order_amount": c.min_order_amount,
+            }
+            for c in coupons
+        ],
+        "featured_menu": featured_items,
+        "cms": [{"page_key": p.page_key, "title": p.title, "body": p.body} for p in cms_pages],
     }

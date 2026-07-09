@@ -20,7 +20,17 @@ import ModuleCrudPage from './pages/ModuleCrudPage';
 import ReservationsPage from './pages/ReservationsPage';
 import WaitlistPage from './pages/WaitlistPage';
 import CustomerQueuePage from './pages/CustomerQueuePage';
+import PlatformLayout from './components/PlatformLayout';
+import CustomerBookTablePage from './pages/CustomerBookTablePage';
+import GuestQueuePage from './pages/GuestQueuePage';
 import LoginPage from './pages/LoginPage';
+
+function ProtectedPlatform({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="flex min-h-screen items-center justify-center">Loading...</div>;
+  if (!user || user.role !== 'super_admin') return <Navigate to="/login" replace />;
+  return <>{children}</>;
+}
 
 const qc = new QueryClient();
 
@@ -61,6 +71,7 @@ function RestaurantRoutes() {
         <Route path="delivery" element={<ModuleCrudPage moduleId="delivery" title="Delivery" />} />
         <Route path="waitlist" element={<WaitlistPage />} />
         <Route path="reservations" element={<ReservationsPage />} />
+        <Route path="book-table" element={<CustomerBookTablePage />} />
         <Route path="queue" element={<CustomerQueuePage />} />
         <Route path="reports" element={<DashboardPage />} />
         <Route path="finance" element={<ModuleCrudPage moduleId="finance" title="Finance" />} />
@@ -82,7 +93,12 @@ export default function App() {
           <Routes>
             <Route path="/" element={<PlatformLanding />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/platform/dashboard" element={
+              <ProtectedPlatform><PlatformLayout /></ProtectedPlatform>
+            } />
             <Route path="/r/:slug" element={<RestaurantPortalPage />} />
+            <Route path="/r/:slug/book" element={<CustomerBookTablePage />} />
+            <Route path="/r/:slug/queue-guest" element={<GuestQueuePage />} />
             <Route path="/r/:slug/login" element={<RestaurantLoginPage />} />
             <Route path="/r/:slug/customer/login" element={<CustomerLoginPage />} />
             <Route path="/r/:slug/select-branch" element={

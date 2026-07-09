@@ -16,7 +16,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const user = await login(email, password);
-      if (user.role === 'super_admin') navigate('/r/spice-garden/dashboard');
+      if (user.role === 'super_admin') navigate('/platform/dashboard');
       else navigate('/');
     } catch {
       setError('Invalid credentials');

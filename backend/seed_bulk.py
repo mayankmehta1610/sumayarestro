@@ -4,6 +4,8 @@ from uuid import uuid4
 
 from sqlalchemy import select
 
+from seed_branding import RESTAURANT_BRANDING
+
 from app.models import (
     AuditLog,
     CashDrawer,
@@ -102,15 +104,17 @@ async def seed_bulk_data(db, slug_to_ids: dict, menu_items_by_branch: dict, tabl
             ))
 
     # Suppliers (10)
+    catalog = RESTAURANT_BRANDING.get("spice-garden", {}).get("supplier_catalog", [])
     suppliers = []
     for i in range(1, 11):
+        supply_desc = catalog[i % len(catalog)] if catalog else f"General F&B supplies batch {i}"
         s = Supplier(
             restaurant_id=rid, branch_id=bid,
             name=f"Supplier {i} Foods Pvt Ltd",
             contact_person=f"Contact Person {i}",
             phone=f"+91-98{i:08d}",
             email=f"supplier{i}@demo.com",
-            address=f"Industrial Area {i}, Ahmedabad",
+            address=f"Industrial Area {i}, Ahmedabad — Supplies: {supply_desc}",
             payment_terms="Net 30" if i % 2 else "COD",
         )
         db.add(s)

@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, require_roles
 from app.core.database import get_db
-from app.models import Customer, Table, User, WaitlistEntry
+from app.models import Branch, Customer, Table, User, WaitlistEntry
 from app.services.notifications import notify_role, notify_user
 
 router = APIRouter(prefix="/waitlist", tags=["waitlist"])
@@ -24,6 +24,43 @@ class JoinWaitlistPayload(BaseModel):
 
 class SeatGuestPayload(BaseModel):
     table_id: UUID
+
+
+@router.post("/join-public")
+async def join_waitlist_public(payload: JoinWaitlistPayload, db: AsyncSession = Depends(get_db)):
+    if not payload.branch_id:
+        raise HTTPException(status_code=400, detail="branch_id required")
+    branch = await db.get(Branch, payload.branch_id)
+    if not branch:
+        raise HTTPException(status_code=404, detail="Branch not found")
+    max_num = (
+        await db.execute(
+            select(func.max(WaitlistEntry.queue_number)).where(
+                WaitlistEntry.branch_id == payload.branch_id,
+                func.date(WaitlistEntry.created_at) == func.current_date(),
+            )
+        )
+    ).scalar() or 0
+    entry = WaitlistEntry(
+        restaurant_id=branch.restaurant_id,
+        branch_id=payload.branch_id,
+        guest_name=payload.guest_name,
+        guest_phone=payload.guest_phone,
+        party_size=payload.party_size,
+        queue_number=max_num + 1,
+        waitlist_status="waiting",
+        estimated_wait_mins=15 + max_num * 5,
+        notes=payload.notes,
+    )
+    db.add(entry)
+    await db.flush()
+    await notify_role(
+        db, role="waiter", title="New guest in waitlist",
+        message=f"#{entry.queue_number} {entry.guest_name} — party of {entry.party_size}",
+        restaurant_id=branch.restaurant_id, branch_id=payload.branch_id,
+        event_type="waitlist_joined", reference_id=entry.id,
+    )
+    return {"id": str(entry.id), "queue_number": entry.queue_number, "estimated_wait_mins": entry.estimated_wait_mins}
 
 
 @router.get("/queue")

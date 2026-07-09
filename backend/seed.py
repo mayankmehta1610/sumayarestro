@@ -105,11 +105,23 @@ async def seed(force: bool = False):
         menu_items_by_branch: dict = {}
         tables_by_branch: dict = {}
 
+        from seed_branding import RESTAURANT_BRANDING
+
         for demo in DEMO_DATA:
             t = demo["tenant"]
+            brand = RESTAURANT_BRANDING.get(t["slug"], {})
             tenant = Tenant(
                 name=t["name"], slug=t["slug"], brand_style=t["brand_style"],
-                primary_color="#F59E0B", secondary_color="#DC2626", subscription_plan="pro",
+                primary_color=brand.get("primary_color", "#F59E0B"),
+                secondary_color=brand.get("secondary_color", "#DC2626"),
+                logo_url=brand.get("logo_url"),
+                subscription_plan="pro",
+                settings={
+                    "tagline": brand.get("tagline"),
+                    "hero_image": brand.get("hero_image"),
+                    "gallery": brand.get("gallery", []),
+                    "offers": brand.get("offers", []),
+                },
             )
             db.add(tenant)
             await db.flush()
@@ -118,6 +130,7 @@ async def seed(force: bool = False):
             restaurant = Restaurant(
                 tenant_id=tenant.id, name=r["name"], slug=r["slug"],
                 cuisine_type=r["cuisine_type"], restaurant_id=tenant.id,
+                description=brand.get("description"),
                 gstin="24AABCU9603R1ZM", fssai_number="10018047000001",
             )
             db.add(restaurant)
@@ -155,15 +168,18 @@ async def seed(force: bool = False):
                 cat = MenuCategory(
                     restaurant_id=restaurant.id, branch_id=branch.id,
                     name="Chef Specials", description="House favorites", sort_order=1,
+                    image_url=brand.get("hero_image"),
                 )
                 db.add(cat)
                 await db.flush()
 
+                menu_imgs = brand.get("menu_images", {})
                 for item_name in bdata["menu"]:
                     db.add(MenuItem(
                         restaurant_id=restaurant.id, branch_id=branch.id, category_id=cat.id,
                         name=item_name, description=f"Freshly prepared {item_name}",
                         price=MENU_PRICES.get(item_name, 200),
+                        image_url=menu_imgs.get(item_name),
                         is_veg=item_name not in ("Fish Curry", "Prawns Fry"), kitchen_station="main",
                     ))
                 await db.flush()
@@ -182,6 +198,16 @@ async def seed(force: bool = False):
                     restaurant_id=restaurant.id, branch_id=branch.id,
                     code=f"WELCOME10-{bdata['code']}", discount_type="percent",
                     discount_value=10.0, min_order_amount=200.0, max_uses=1000,
+                ))
+
+            for i, offer in enumerate(brand.get("offers", [])):
+                from app.models import CmsContent
+                db.add(CmsContent(
+                    restaurant_id=restaurant.id,
+                    page_key=f"offer_{i + 1}",
+                    title=offer.get("title", f"Offer {i + 1}"),
+                    body=f"<strong>{offer.get('discount')}</strong> — {offer.get('desc')}",
+                    content_type="banner", is_published=True,
                 ))
 
         for email, name, role, slug, branch_code in STAFF_USERS:

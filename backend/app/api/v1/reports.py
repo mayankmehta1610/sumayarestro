@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
 from app.core.database import get_db
-from app.models import Ingredient, KotTicket, MenuItem, OrderHeader, OrderLine, Payment, Table
+from app.models import Branch, Ingredient, KotTicket, MenuItem, OrderHeader, OrderLine, Payment, Restaurant, Table, Tenant, TenantInvoice
 from app.schemas.common import apply_tenant_filter
 from app.schemas.entities import DashboardStats
 
@@ -148,3 +148,72 @@ async def report_status(report_id: str, user: dict = Depends(get_current_user)):
 async def export_reports(db: AsyncSession = Depends(get_db), user: dict = Depends(get_current_user)):
     stats = await dashboard_stats(db, user)
     return stats.model_dump()
+
+
+@router.get("/platform")
+async def platform_dashboard(db: AsyncSession = Depends(get_db), user: dict = Depends(get_current_user)):
+    if user["role"] != "super_admin":
+        from fastapi import HTTPException
+        raise HTTPException(status_code=403, detail="Super admin only")
+
+    rest_count = (await db.execute(select(func.count()).select_from(Restaurant).where(Restaurant.status == "active"))).scalar() or 0
+    tenant_count = (await db.execute(select(func.count()).select_from(Tenant).where(Tenant.status == "active"))).scalar() or 0
+
+    restaurants_result = await db.execute(select(Restaurant).where(Restaurant.status == "active"))
+    restaurants = restaurants_result.scalars().all()
+
+    restaurant_stats = []
+    total_revenue = 0.0
+    for rest in restaurants:
+        rev = (
+            await db.execute(
+                select(func.coalesce(func.sum(OrderHeader.net_amount), 0)).where(
+                    OrderHeader.restaurant_id == rest.id,
+                    OrderHeader.payment_status.in_(["paid", "completed"]),
+                    OrderHeader.status != "deleted",
+                )
+            )
+        ).scalar() or 0
+        orders = (
+            await db.execute(
+                select(func.count()).select_from(OrderHeader).where(
+                    OrderHeader.restaurant_id == rest.id, OrderHeader.status != "deleted"
+                )
+            )
+        ).scalar() or 0
+        branches = (
+            await db.execute(
+                select(func.count()).select_from(Branch).where(
+                    Branch.restaurant_id == rest.id, Branch.status == "active"
+                )
+            )
+        ).scalar() or 0
+        tenant = await db.get(Tenant, rest.tenant_id)
+        total_revenue += float(rev)
+        restaurant_stats.append({
+            "id": str(rest.id),
+            "name": rest.name,
+            "slug": rest.slug,
+            "cuisine_type": rest.cuisine_type,
+            "branches": int(branches),
+            "total_orders": int(orders),
+            "total_revenue": float(rev),
+            "logo_url": tenant.logo_url if tenant else None,
+            "primary_color": tenant.primary_color if tenant else "#F59E0B",
+        })
+
+    mrr = (
+        await db.execute(
+            select(func.coalesce(func.sum(TenantInvoice.amount), 0)).where(
+                TenantInvoice.invoice_status == "paid"
+            )
+        )
+    ).scalar() or 0
+
+    return {
+        "registered_restaurants": int(rest_count),
+        "active_tenants": int(tenant_count),
+        "platform_revenue": float(total_revenue),
+        "subscription_mrr": float(mrr),
+        "restaurants": restaurant_stats,
+    }

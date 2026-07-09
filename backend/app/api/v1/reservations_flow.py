@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, require_roles
 from app.core.database import get_db
-from app.models import Reservation, Table
+from app.models import Branch, Reservation, Table
 from app.services.notifications import notify_role, notify_user
 
 router = APIRouter(prefix="/reservations", tags=["reservations-flow"])
@@ -23,6 +23,50 @@ class BookReservationPayload(BaseModel):
     notes: str | None = None
     table_id: UUID | None = None
     branch_id: UUID | None = None
+
+
+@router.post("/book-public")
+async def book_public(
+    payload: BookReservationPayload,
+    db: AsyncSession = Depends(get_db),
+):
+    """Public table booking — no login required."""
+    if not payload.branch_id:
+        raise HTTPException(status_code=400, detail="branch_id required")
+    branch = await db.get(Branch, payload.branch_id)
+    if not branch:
+        raise HTTPException(status_code=404, detail="Branch not found")
+
+    reservation = Reservation(
+        restaurant_id=branch.restaurant_id,
+        branch_id=payload.branch_id,
+        guest_name=payload.guest_name,
+        guest_phone=payload.guest_phone,
+        guest_count=payload.guest_count,
+        reserved_at=payload.reserved_at,
+        event_type=payload.event_type,
+        notes=payload.notes,
+        reservation_status="confirmed",
+    )
+    db.add(reservation)
+    await db.flush()
+
+    await notify_role(
+        db,
+        role="waiter",
+        title="New table reservation",
+        message=f"{payload.guest_name} — {payload.guest_count} guests at {payload.reserved_at.strftime('%d %b %H:%M')}",
+        restaurant_id=branch.restaurant_id,
+        branch_id=payload.branch_id,
+        event_type="reservation_booked",
+        reference_id=reservation.id,
+    )
+
+    return {
+        "id": str(reservation.id),
+        "message": "Table reserved successfully! We will confirm shortly.",
+        "reservation_status": reservation.reservation_status,
+    }
 
 
 @router.post("/book")

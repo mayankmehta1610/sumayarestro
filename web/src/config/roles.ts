@@ -45,11 +45,13 @@ export const NAV_ITEMS: NavItem[] = [
   { id: 'reports', label: 'Reports', icon: BarChart3, path: 'reports', roles: ['restaurant_owner', 'branch_manager'] },
   { id: 'finance', label: 'Finance', icon: BarChart3, path: 'finance', roles: ['restaurant_owner', 'branch_manager', 'cashier'] },
   { id: 'cms', label: 'CMS', icon: Globe, path: 'cms', roles: ['restaurant_owner'] },
+  { id: 'platform-dashboard', label: 'Platform', icon: Crown, path: 'platform-dashboard', roles: ['super_admin'] },
   { id: 'tenants', label: 'Tenants', icon: Crown, path: 'tenants', roles: ['super_admin'] },
   { id: 'integrations', label: 'Integrations', icon: Settings, path: 'integrations', roles: ['restaurant_owner', 'super_admin'] },
   { id: 'audit', label: 'Audit', icon: Shield, path: 'audit', roles: ['super_admin', 'support_admin'] },
   { id: 'order-online', label: 'Order Food', icon: ShoppingBag, path: 'order', roles: ['customer'] },
   { id: 'my-orders', label: 'My Orders', icon: Receipt, path: 'my-orders', roles: ['customer'] },
+  { id: 'book-table', label: 'Book Table', icon: Calendar, path: 'book-table', roles: ['customer'] },
   { id: 'join-queue', label: 'Join Queue', icon: Users, path: 'queue', roles: ['customer'] },
 ];
 

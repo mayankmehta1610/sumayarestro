@@ -111,10 +111,11 @@ export default function CustomerOrderPage() {
             <section key={cat.id}>
               <h2 className="font-display text-xl font-bold mb-3">{cat.name}</h2>
               <div className="grid gap-3 sm:grid-cols-2">
-                {cat.items.map((item) => (
-                  <button key={item.id} onClick={() => addItem(item)} className="card text-left hover:shadow-md transition">
-                    <div className="flex justify-between">
-                      <div><p className="font-semibold">{item.name}</p><p className="text-xs">{item.is_veg ? '🟢 Veg' : '🔴 Non-Veg'}</p></div>
+                {cat.items.map((item: { id: string; name: string; price: number; is_veg: boolean; image_url?: string; description?: string }) => (
+                  <button key={item.id} onClick={() => addItem(item)} className="card text-left hover:shadow-md transition overflow-hidden p-0">
+                    {item.image_url && <img src={item.image_url} alt={item.name} className="h-32 w-full object-cover" />}
+                    <div className="p-4 flex justify-between">
+                      <div><p className="font-semibold">{item.name}</p><p className="text-xs text-coffee/60 line-clamp-1">{item.description}</p><p className="text-xs mt-1">{item.is_veg ? '🟢 Veg' : '🔴 Non-Veg'}</p></div>
                       <p className="font-bold text-chili">₹{item.price}</p>
                     </div>
                   </button>
