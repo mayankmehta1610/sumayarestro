@@ -1,16 +1,16 @@
 # Deploy Sumaya Resto on Render (with laptop PostgreSQL tunnel)
 
-## Architecture (interim)
+## Architecture
 
 ```
-[Render] sumaya-web (static)  →  sumaya-api (FastAPI)
+[Render] sumaya-web (static)  →  sumaya-api (FastAPI, Oregon)
                                       ↓
-                            [ngrok TCP tunnel]
-                                      ↓
-                    [Your laptop] PostgreSQL :5433 (Docker)
+                    Render Postgres (sumaya_resto database)
 ```
 
-Use this until you move PostgreSQL to [Render Postgres](https://render.com/docs/databases), Neon, or Supabase.
+The API uses a dedicated `sumaya_resto` database on your existing Render Postgres instance (free tier allows one Postgres — shared with SumayaCare360, separate database).
+
+For local development, use Docker Postgres on port 5433.
 
 ---
 
@@ -97,11 +97,11 @@ This starts Docker, seeds data, launches the ngrok tunnel, and prints the exact 
 
 ### Environment variables (Render Dashboard)
 
-**sumaya-api** — only `DATABASE_URL` is required (others are in `render.yaml`):
+**sumaya-api** — set `DATABASE_URL` if not already configured:
 
 | Key | Value |
 |-----|--------|
-| `DATABASE_URL` | From `.\scripts\get-tunnel-url.ps1` output |
+| `DATABASE_URL` | `postgresql+asyncpg://USER:PASS@HOST:5432/sumaya_resto` |
 
 Pre-configured in blueprint: `CORS_ORIGINS`, `SECRET_KEY`, `PYTHON_VERSION`
 
@@ -111,9 +111,17 @@ Pre-configured in blueprint: `CORS_ORIGINS`, `SECRET_KEY`, `PYTHON_VERSION`
 |-----|--------|
 | `VITE_API_URL` | `https://sumaya-api.onrender.com/api/v1` |
 
-4. Deploy both services.
-5. Verify API: `https://sumaya-api.onrender.com/health` (should show `database: connected`)
-6. Open web: `https://sumaya-web.onrender.com/r/spice-garden/login`
+4. Deploy both services (or trigger via Render API).
+5. Seed remote DB once from your machine:
+
+```powershell
+$env:DATABASE_URL = "postgresql+asyncpg://USER:PASS@HOST:5432/sumaya_resto"
+cd backend
+python seed.py
+```
+
+6. Verify API: `https://sumaya-api.onrender.com/health`
+7. Open web: `https://sumaya-web.onrender.com/r/spice-garden/login`
 
 ---
 

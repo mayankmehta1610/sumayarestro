@@ -1,16 +1,11 @@
 # Render Blueprint — https://render.com/docs/blueprint-spec
-# Deploy: Dashboard → New → Blueprint → connect mayankmehta1610/sumayarestro
-#
-# Laptop PostgreSQL (interim):
-#   1. docker compose up -d postgres
-#   2. .\scripts\deploy-all.ps1
-#   3. Paste printed DATABASE_URL into sumaya-api env on Render
+# Repo: github.com/mayankmehta1610/sumayarestro
 
 services:
   - type: web
     name: sumaya-api
     runtime: python
-    region: singapore
+    region: oregon
     plan: free
     rootDir: backend
     buildCommand: pip install -r requirements.txt
@@ -25,8 +20,6 @@ services:
         sync: false
       - key: CORS_ORIGINS
         value: https://sumaya-web.onrender.com
-      - key: REDIS_URL
-        value: ""
 
   - type: web
     name: sumaya-web
