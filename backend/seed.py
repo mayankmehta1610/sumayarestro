@@ -3,7 +3,8 @@ import asyncio
 
 from sqlalchemy import select, text
 
-from app.core.database import AsyncSessionLocal, Base, engine
+from app.core.config import settings
+from app.core.database import AsyncSessionLocal, Base, engine, ensure_schema
 from app.core.security import hash_password
 from app.models import (
     Branch,
@@ -82,10 +83,13 @@ STAFF_USERS = [
 
 
 async def seed(force: bool = False):
+    schema = settings.db_schema
     async with engine.begin() as conn:
         if force:
-            await conn.execute(text("DROP SCHEMA public CASCADE"))
-            await conn.execute(text("CREATE SCHEMA public"))
+            await conn.execute(text(f"DROP SCHEMA IF EXISTS {schema} CASCADE"))
+            await conn.execute(text(f"CREATE SCHEMA {schema}"))
+        else:
+            await conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema}"))
         await conn.run_sync(Base.metadata.create_all)
 
     async with AsyncSessionLocal() as db:

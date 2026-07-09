@@ -8,13 +8,15 @@ from sqlalchemy import text
 
 from app.api.v1.router import api_router
 from app.core.config import settings
-from app.core.database import Base, engine
+from app.core.config import settings
+from app.core.database import Base, engine, ensure_schema
 
 
 async def _init_database(retries: int = 30, delay: float = 2.0) -> None:
     last_error: Exception | None = None
     for attempt in range(retries):
         try:
+            await ensure_schema()
             async with engine.begin() as conn:
                 await conn.run_sync(Base.metadata.create_all)
             return
@@ -56,7 +58,12 @@ async def health():
     try:
         async with engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
-        return {"status": "healthy", "app": settings.app_name, "database": "connected"}
+        return {
+            "status": "healthy",
+            "app": settings.app_name,
+            "database": "connected",
+            "schema": settings.db_schema,
+        }
     except Exception as exc:
         return JSONResponse(
             status_code=503,

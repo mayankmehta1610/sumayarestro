@@ -50,7 +50,7 @@
         { "type": "wait", "ms": 800 },
         { "type": "fill", "selector": "input", "index": 0, "value": "Demo Guest" },
         { "type": "fill", "selector": "input", "index": 1, "value": "+91 98765 43210" },
-        { "type": "fill", "selector": "input[type=email]", "value": "demo.guest.video@spice-garden.com" },
+        { "type": "fill", "selector": "input[type=email]", "value": "demo.guest.{{ts}}@spice-garden.com" },
         { "type": "fill", "selector": "input[type=password]", "value": "Sumaya@123" },
         { "type": "click", "text": "Register & Order" },
         { "type": "wait", "ms": 4000 }

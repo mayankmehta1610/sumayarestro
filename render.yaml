@@ -18,6 +18,8 @@ services:
         generateValue: true
       - key: DATABASE_URL
         sync: false
+      - key: DB_SCHEMA
+        value: sumaya_resto
       - key: CORS_ORIGINS
         value: https://sumaya-web.onrender.com
 

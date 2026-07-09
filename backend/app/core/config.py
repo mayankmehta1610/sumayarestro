@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24
     database_url: str = "postgresql+asyncpg://sumaya:sumaya_secret@localhost:5433/sumaya_resto"
+    db_schema: str = "sumaya_resto"
     redis_url: str = "redis://localhost:6379/0"
     cors_origins: str = "http://localhost:5173,http://localhost:3000,http://localhost:8081"
 
