@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Build
+web/dist/
+*.egg-info/
+.pytest_cache/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+
+# Docker volumes (local)
+postgres_data/
+
+# Tunnel credentials (never commit)
+.cloudflared/*.json
+!cloudflared/config.example.yml
+
+# OS
+Thumbs.db
+
+# Excel (keep requirement pack optional - user may want it)
+# Sumaya_Resto_Complete_Requirement_Pack.xlsx
