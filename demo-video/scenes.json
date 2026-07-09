@@ -152,16 +152,21 @@
     {
       "id": "11-cashier-billing",
       "title": "Cashier Billing",
-      "narration": "When the meal is done, the cashier opens billing. All unpaid orders are listed with order number and amount. Select an order, choose payment method — cash, card, or UPI — and mark it paid. The order status moves to completed and revenue is recorded for reports.",
+      "narration": "At billing, the cashier sees all unpaid orders. They apply a coupon code — the discount is calculated instantly. The bill shows subtotal, discount, service charge, CGST and SGST separately, then the final total. Collect payment via cash, UPI, or card. Loyalty points are earned automatically. Click Print Bill for a formatted GST receipt ready for the customer.",
       "login": { "email": "cashier@spice-garden.com", "path": "/r/spice-garden/login" },
       "path": "/r/spice-garden/billing",
       "actions": [
-        { "type": "wait", "ms": 3000 },
+        { "type": "wait", "ms": 4000 },
         { "type": "click", "selector": "button.w-full", "first": true },
         { "type": "wait", "ms": 1500 },
+        { "type": "fill", "selector": "input[placeholder*='Coupon']", "value": "SPICE10" },
+        { "type": "click", "text": "Apply" },
+        { "type": "wait", "ms": 2500 },
         { "type": "click", "text": "Cash" },
         { "type": "wait", "ms": 1000 },
-        { "type": "click", "text": "Mark Paid" },
+        { "type": "click", "text": "Collect" },
+        { "type": "wait", "ms": 3000 },
+        { "type": "click", "text": "Print Preview" },
         { "type": "wait", "ms": 3000 }
       ]
     },
