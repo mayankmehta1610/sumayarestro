@@ -38,13 +38,20 @@ if (Test-Path $envFile) {
 
 $ngrok = Get-Command ngrok -ErrorAction SilentlyContinue
 if (-not $ngrok) {
-    Write-Host "ngrok not found. Install from https://ngrok.com/download" -ForegroundColor Red
+    Write-Host "ngrok not found. Install: .\scripts\install-tools.ps1" -ForegroundColor Red
     Write-Host ""
     Write-Host "Alternative — Cloudflare Tunnel:" -ForegroundColor Yellow
-    Write-Host "  cloudflared tunnel --url tcp://localhost:$Port"
+    Write-Host "  .\scripts\tunnel-cloudflared.ps1"
+    exit 1
+}
+
+if (-not $env:NGROK_AUTHTOKEN -and -not (Test-Path "$env:LOCALAPPDATA\ngrok\ngrok.yml") -and -not (Test-Path "$env:USERPROFILE\.ngrok2\ngrok.yml")) {
+    Write-Host "ngrok authtoken required (free): https://dashboard.ngrok.com/get-started/your-authtoken" -ForegroundColor Yellow
+    Write-Host "  ngrok config add-authtoken YOUR_TOKEN" -ForegroundColor White
+    Write-Host "  OR add NGROK_AUTHTOKEN=... to .env" -ForegroundColor White
     Write-Host ""
-    Write-Host "Alternative — localtunnel (less reliable for DB):" -ForegroundColor Yellow
-    Write-Host "  npx localtunnel --port $Port"
+    Write-Host "Alternative without ngrok account:" -ForegroundColor Yellow
+    Write-Host "  .\scripts\tunnel-cloudflared.ps1"
     exit 1
 }
 

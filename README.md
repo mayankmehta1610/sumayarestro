@@ -107,7 +107,12 @@ All domains follow REST pattern:
 
 See **[DEPLOY.md](DEPLOY.md)** for full instructions.
 
-1. `render.yaml` — Blueprint for API + static web
-2. `.\scripts\tunnel-postgres.ps1` — Expose laptop PostgreSQL to Render via ngrok
-3. Connect repo: [github.com/mayankmehta1610/sumayarestro](https://github.com/mayankmehta1610/sumayarestro)
+```powershell
+.\scripts\deploy-all.ps1   # Docker + seed + tunnel + Render checklist
+```
+
+1. `render.yaml` — Blueprint for API + static web (CORS + API URL pre-configured)
+2. `.\scripts\tunnel-postgres.ps1` — ngrok TCP tunnel (requires free ngrok authtoken)
+3. `.\scripts\tunnel-cloudflared.ps1` — Cloudflare alternative
+4. Repo: [github.com/mayankmehta1610/sumayarestro](https://github.com/mayankmehta1610/sumayarestro)
 

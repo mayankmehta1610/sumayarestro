@@ -1,13 +1,12 @@
 # Render Blueprint — https://render.com/docs/blueprint-spec
-# Deploy: connect repo → Render auto-detects this file
+# Deploy: Dashboard → New → Blueprint → connect mayankmehta1610/sumayarestro
 #
-# BEFORE FIRST DEPLOY:
-# 1. Start local Postgres: docker compose up -d postgres
-# 2. Start tunnel: .\scripts\tunnel-postgres.ps1  (copy public host:port to DATABASE_URL)
-# 3. In Render Dashboard set DATABASE_URL manually (see DEPLOY.md)
+# Laptop PostgreSQL (interim):
+#   1. docker compose up -d postgres
+#   2. .\scripts\deploy-all.ps1
+#   3. Paste printed DATABASE_URL into sumaya-api env on Render
 
 services:
-  # FastAPI Backend
   - type: web
     name: sumaya-api
     runtime: python
@@ -24,12 +23,11 @@ services:
         generateValue: true
       - key: DATABASE_URL
         sync: false
-      - key: REDIS_URL
-        sync: false
       - key: CORS_ORIGINS
-        sync: false
+        value: https://sumaya-web.onrender.com
+      - key: REDIS_URL
+        value: ""
 
-  # React Web (Vite static site)
   - type: web
     name: sumaya-web
     runtime: static
@@ -42,4 +40,4 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        sync: false
+        value: https://sumaya-api.onrender.com/api/v1
