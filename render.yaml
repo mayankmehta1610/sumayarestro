@@ -4,11 +4,12 @@
 services:
   - type: web
     name: sumaya-api
-    runtime: docker
+    runtime: python
     region: oregon
     plan: free
     rootDir: backend
-    dockerfilePath: ./Dockerfile
+    buildCommand: bash build.sh
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
       - key: SECRET_KEY
