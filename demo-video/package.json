@@ -1,0 +1,14 @@
+{
+  "name": "sumaya-demo-video",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "record": "node record.mjs",
+    "voice": "python generate-voice.py",
+    "assemble": "powershell -ExecutionPolicy Bypass -File assemble.ps1",
+    "build": "npm run voice && npm run record && npm run assemble"
+  },
+  "devDependencies": {
+    "playwright": "^1.61.1"
+  }
+}

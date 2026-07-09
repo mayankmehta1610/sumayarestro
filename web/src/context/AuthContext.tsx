@@ -14,11 +14,20 @@ export interface User {
   needs_branch_selection?: boolean;
 }
 
+interface CustomerRegisterPayload {
+  full_name: string;
+  email: string;
+  phone: string;
+  password: string;
+  restaurant_slug?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string, restaurantSlug?: string) => Promise<User>;
   customerLogin: (email: string, password: string, restaurantSlug: string) => Promise<User>;
+  customerRegister: (payload: CustomerRegisterPayload) => Promise<User>;
   logout: () => void;
   setBranch: (branchId: string) => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -62,9 +71,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { customerLogin: cl } = await import('../lib/api');
     const data = await cl(email, password, restaurantSlug);
     localStorage.setItem('sumaya_token', data.access_token);
-    localStorage.setItem('sumaya_user', JSON.stringify(data.user));
-    setUser(data.user);
+    localStorage.setItem('sumaya_user', JSON.stringify({ ...data.user, restaurant_slug: restaurantSlug }));
+    setUser({ ...data.user, restaurant_slug: restaurantSlug });
     return data.user;
+  };
+
+  const customerRegister = async (payload: CustomerRegisterPayload) => {
+    const { customerRegister: cr } = await import('../lib/api');
+    const data = await cr(payload);
+    const slug = payload.restaurant_slug || null;
+    const user = { ...data.user, restaurant_slug: slug };
+    localStorage.setItem('sumaya_token', data.access_token);
+    localStorage.setItem('sumaya_user', JSON.stringify(user));
+    setUser(user);
+    return user;
   };
 
   const logout = () => {
@@ -86,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, customerLogin, logout, setBranch, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, login, customerLogin, customerRegister, logout, setBranch, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

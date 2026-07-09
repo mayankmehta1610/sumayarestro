@@ -94,6 +94,7 @@ async def customer_register(payload: CustomerRegister, db: AsyncSession = Depend
             "full_name": user.full_name,
             "role": "customer",
             "restaurant_id": str(restaurant.id),
+            "restaurant_slug": restaurant.slug,
             "branch_id": str(branch_id),
         },
     }
@@ -125,6 +126,7 @@ async def customer_login(payload: CustomerLogin, db: AsyncSession = Depends(get_
             "full_name": user.full_name,
             "role": "customer",
             "restaurant_id": str(user.restaurant_id),
+            "restaurant_slug": restaurant.slug,
             "branch_id": str(user.branch_id) if user.branch_id else None,
         },
     }

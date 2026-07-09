@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { customerRegister } from '../lib/api';
 import { DEMO_LOGINS } from '../config/roles';
 
 export default function CustomerLoginPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { customerLogin } = useAuth();
+  const { customerLogin, customerRegister } = useAuth();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [form, setForm] = useState({ full_name: '', email: '', phone: '', password: 'Sumaya@123' });
   const [error, setError] = useState('');
