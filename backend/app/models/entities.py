@@ -73,6 +73,7 @@ class Branch(Base, TenantMixin):
     tax_rate: Mapped[float] = mapped_column(Float, default=5.0)
     opening_hours: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     delivery_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    service_charge_rate: Mapped[float] = mapped_column(Float, default=0.0)
     __table_args__ = (UniqueConstraint("restaurant_id", "code", name="uq_branch_code"),)
 
 
@@ -303,8 +304,10 @@ class OrderHeader(Base, TenantMixin):
     order_status: Mapped[str] = mapped_column(String(30), default="open", index=True)
     gross_amount: Mapped[float] = mapped_column(Float, default=0.0)
     discount_amount: Mapped[float] = mapped_column(Float, default=0.0)
+    service_charge_amount: Mapped[float] = mapped_column(Float, default=0.0)
     tax_amount: Mapped[float] = mapped_column(Float, default=0.0)
     net_amount: Mapped[float] = mapped_column(Float, default=0.0)
+    tax_breakdown: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     payment_status: Mapped[str] = mapped_column(String(30), default="unpaid")
     coupon_code: Mapped[str | None] = mapped_column(String(50), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)

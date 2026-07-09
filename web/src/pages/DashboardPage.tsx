@@ -1,12 +1,20 @@
 import { useQuery } from '@tanstack/react-query';
-import { DollarSign, ShoppingCart, Utensils, ChefHat, AlertTriangle, TrendingUp } from 'lucide-react';
+import { DollarSign, ShoppingCart, Utensils, ChefHat, AlertTriangle, TrendingUp, Sparkles } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { getDashboard } from '../lib/api';
+import { getDashboard, api } from '../lib/api';
 
 const COLORS = ['#F59E0B', '#DC2626', '#78350F', '#10B981'];
 
 export default function DashboardPage() {
   const { data, isLoading } = useQuery({ queryKey: ['dashboard'], queryFn: getDashboard });
+  const { data: forecast } = useQuery({
+    queryKey: ['ai-forecast'],
+    queryFn: async () => (await api.get('/ai/forecast', { params: { days: 7 } })).data,
+  });
+  const { data: recommendations } = useQuery({
+    queryKey: ['ai-rec'],
+    queryFn: async () => (await api.get('/ai/recommendations')).data,
+  });
 
   if (isLoading) return <div className="p-12 text-center text-coffee/60">Loading dashboard from API...</div>;
 
@@ -77,6 +85,34 @@ export default function DashboardPage() {
           ) : (
             <p className="py-8 text-center text-coffee/50">No payments recorded today</p>
           )}
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2 mt-6">
+        <div className="card">
+          <h2 className="mb-4 flex items-center gap-2 font-display text-xl font-bold">
+            <Sparkles className="h-5 w-5 text-chili" /> AI Demand Forecast (7 days)
+          </h2>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {(forecast?.items || []).slice(0, 6).map((f: Record<string, unknown>) => (
+              <div key={String(f.item_name)} className="flex justify-between text-sm border-b border-amber-warm/10 pb-2">
+                <span>{String(f.item_name)}</span>
+                <span className="text-coffee/70">~{String(f.forecast_next_7d)} units · {String(f.recommendation)}</span>
+              </div>
+            ))}
+            {!forecast?.items?.length && <p className="text-coffee/50 text-center py-4">Forecast builds as orders accumulate</p>}
+          </div>
+        </div>
+        <div className="card">
+          <h2 className="mb-4 font-display text-xl font-bold">Upsell & Inventory Alerts</h2>
+          <div className="space-y-2">
+            {(recommendations?.upsell_suggestions || []).slice(0, 3).map((u: Record<string, string>, i: number) => (
+              <p key={i} className="text-sm">⭐ {u.item_name} — {u.reason}</p>
+            ))}
+            {(recommendations?.inventory_alerts || []).slice(0, 3).map((a: Record<string, unknown>, i: number) => (
+              <p key={i} className="text-sm text-orange-700">⚠ {String(a.action)}</p>
+            ))}
+          </div>
         </div>
       </div>
 

@@ -42,6 +42,10 @@ export const NAV_ITEMS: NavItem[] = [
   { id: 'delivery', label: 'Delivery', icon: Truck, path: 'delivery', roles: ['delivery_operator', 'branch_manager', 'restaurant_owner'] },
   { id: 'waitlist', label: 'Waitlist', icon: Users, path: 'waitlist', roles: ['restaurant_owner', 'branch_manager', 'waiter'] },
   { id: 'reservations', label: 'Reservations', icon: Calendar, path: 'reservations', roles: ['branch_manager', 'restaurant_owner', 'waiter'] },
+  { id: 'loyalty', label: 'Loyalty', icon: Gift, path: 'loyalty', roles: ['restaurant_owner', 'branch_manager'] },
+  { id: 'purchase-orders', label: 'Purchase Orders', icon: Package, path: 'purchase-orders', roles: ['inventory_manager', 'restaurant_owner', 'branch_manager'] },
+  { id: 'stock-ledger', label: 'Stock Ledger', icon: Package, path: 'stock-ledger', roles: ['inventory_manager', 'restaurant_owner'] },
+  { id: 'riders', label: 'Riders', icon: Truck, path: 'riders', roles: ['delivery_operator', 'restaurant_owner', 'branch_manager'] },
   { id: 'reports', label: 'Reports', icon: BarChart3, path: 'reports', roles: ['restaurant_owner', 'branch_manager'] },
   { id: 'finance', label: 'Finance', icon: BarChart3, path: 'finance', roles: ['restaurant_owner', 'branch_manager', 'cashier'] },
   { id: 'cms', label: 'CMS', icon: Globe, path: 'cms', roles: ['restaurant_owner'] },
@@ -161,4 +165,27 @@ export const CRUD_MODULES: Record<string, { apiEndpoint: string; fields: { key: 
     { key: 'integration_type', label: 'Type', type: 'text', required: true },
   ]},
   audit: { apiEndpoint: '/audit', fields: [] },
+  loyalty: { apiEndpoint: '/loyalty', fields: [
+    { key: 'customer_id', label: 'Customer ID', type: 'text', required: true },
+    { key: 'points', label: 'Points', type: 'number', required: true },
+    { key: 'transaction_type', label: 'Type', type: 'select', options: [{ value: 'earn', label: 'Earn' }, { value: 'redeem', label: 'Redeem' }] },
+  ]},
+  'purchase-orders': { apiEndpoint: '/suppliers/purchase-orders', fields: [
+    { key: 'supplier_id', label: 'Supplier ID', type: 'text', required: true },
+    { key: 'po_number', label: 'PO Number', type: 'text', required: true },
+    { key: 'total_amount', label: 'Total', type: 'number' },
+  ]},
+  'stock-ledger': { apiEndpoint: '/inventory/ledger', fields: [
+    { key: 'ingredient_id', label: 'Ingredient ID', type: 'text', required: true },
+    { key: 'movement_type', label: 'Type', type: 'select', options: [{ value: 'in', label: 'In' }, { value: 'out', label: 'Out' }] },
+    { key: 'quantity', label: 'Qty', type: 'number', required: true },
+  ]},
+  riders: { apiEndpoint: '/delivery/riders', fields: [
+    { key: 'name', label: 'Name', type: 'text', required: true },
+    { key: 'phone', label: 'Phone', type: 'text', required: true },
+  ]},
+  recipes: { apiEndpoint: '/menus/recipes', fields: [
+    { key: 'menu_item_id', label: 'Menu Item ID', type: 'text', required: true },
+    { key: 'name', label: 'Recipe', type: 'text', required: true },
+  ]},
 };

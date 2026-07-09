@@ -75,6 +75,16 @@ export default function App() {
           <TouchableOpacity style={s.btnOutline} onPress={() => { setEmail(`customer@${slug}.com`); handleLogin(); }}>
             <Text style={s.btnOutlineText}>Customer Demo Login</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={[s.btnOutline, { marginTop: 8 }]} onPress={async () => {
+            const em = `mobile.${Date.now()}@${slug}.com`;
+            try {
+              const data = await customerRegister({ full_name: 'Mobile Guest', email: em, phone: '+91 99999 00000', password: 'Sumaya@123', restaurant_slug: slug });
+              setUser(data.user);
+              setScreen('customer-order');
+            } catch { Alert.alert('Register', 'Registration failed — try demo login'); }
+          }}>
+            <Text style={s.btnOutlineText}>Register as Customer</Text>
+          </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
     );

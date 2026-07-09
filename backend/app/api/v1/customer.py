@@ -36,6 +36,9 @@ class CustomerOrderCreate(BaseModel):
     branch_id: UUID
     lines: list[dict]
     notes: str | None = None
+    coupon_code: str | None = None
+    loyalty_points_redeem: int = 0
+    delivery_address: str | None = None
 
 
 @router.post("/register")
@@ -168,24 +171,23 @@ async def customer_place_order(
     cust_result = await db.execute(select(Customer).where(Customer.email == user["email"]))
     customer = cust_result.scalar_one_or_none()
 
-    gross = 0.0
-    lines_data = []
+    from app.services.billing import LineInput, apply_bill_to_order, calculate_bill
+    line_inputs = [LineInput(menu_item_id=UUID(line["menu_item_id"]), quantity=line.get("quantity", 1)) for line in payload.lines]
     for line in payload.lines:
         item = await db.get(MenuItem, UUID(line["menu_item_id"]))
         if not item or not item.is_available:
             raise HTTPException(status_code=400, detail=f"Item unavailable: {line.get('menu_item_id')}")
-        qty = line.get("quantity", 1)
-        line_total = item.price * qty
-        gross += line_total
-        lines_data.append((item, qty, line_total, line.get("notes")))
 
-    tax = gross * (branch.tax_rate / 100)
-    net = gross + tax
+    bill = await calculate_bill(
+        db, branch, line_inputs,
+        coupon_code=payload.coupon_code,
+        loyalty_points_redeem=payload.loyalty_points_redeem,
+        customer=customer,
+        restaurant_id=branch.restaurant_id,
+    )
 
     today = datetime.now(timezone.utc).strftime("%Y%m%d")
-    count_result = await db.execute(
-        select(OrderHeader).where(OrderHeader.branch_id == payload.branch_id)
-    )
+    count_result = await db.execute(select(OrderHeader).where(OrderHeader.branch_id == payload.branch_id))
     count = len(count_result.scalars().all())
     order_number = f"ORD-{today}-{count + 1:04d}"
 
@@ -197,18 +199,22 @@ async def customer_place_order(
         table_id=payload.table_id,
         customer_id=customer.id if customer else None,
         order_status="placed",
-        gross_amount=gross,
-        tax_amount=tax,
-        net_amount=net,
         payment_status="unpaid",
         notes=payload.notes,
+        coupon_code=bill.coupon_code,
         created_by=UUID(user["id"]),
     )
+    apply_bill_to_order(order, bill)
+    if customer and bill.loyalty_points_redeemed:
+        customer.loyalty_points -= bill.loyalty_points_redeemed
     db.add(order)
     await db.flush()
 
     order_lines = []
-    for item, qty, line_total, notes in lines_data:
+    for line in payload.lines:
+        item = await db.get(MenuItem, UUID(line["menu_item_id"]))
+        qty = line.get("quantity", 1)
+        line_total = item.price * qty
         ol = OrderLine(
             restaurant_id=order.restaurant_id,
             branch_id=payload.branch_id,
@@ -219,7 +225,7 @@ async def customer_place_order(
             unit_price=item.price,
             line_total=line_total,
             line_status="placed",
-            notes=notes,
+            notes=line.get("notes"),
             created_by=UUID(user["id"]),
         )
         db.add(ol)
@@ -229,6 +235,16 @@ async def customer_place_order(
         table = await db.get(Table, payload.table_id)
         if table:
             table.table_status = "occupied"
+
+    if payload.order_type == "delivery":
+        from app.models import DeliveryOrder
+        db.add(DeliveryOrder(
+            restaurant_id=order.restaurant_id,
+            branch_id=payload.branch_id,
+            order_id=order.id,
+            delivery_status="pending",
+            created_by=UUID(user["id"]),
+        ))
 
     kot = KotTicket(
         restaurant_id=order.restaurant_id,

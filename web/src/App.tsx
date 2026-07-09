@@ -24,6 +24,9 @@ import PlatformLayout from './components/PlatformLayout';
 import CustomerBookTablePage from './pages/CustomerBookTablePage';
 import GuestQueuePage from './pages/GuestQueuePage';
 import LoginPage from './pages/LoginPage';
+import QROrderPage from './pages/QROrderPage';
+import ReportsPage from './pages/ReportsPage';
+import POSPage from './pages/POSPage';
 
 function ProtectedPlatform({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -73,7 +76,13 @@ function RestaurantRoutes() {
         <Route path="reservations" element={<ReservationsPage />} />
         <Route path="book-table" element={<CustomerBookTablePage />} />
         <Route path="queue" element={<CustomerQueuePage />} />
-        <Route path="reports" element={<DashboardPage />} />
+        <Route path="loyalty" element={<ModuleCrudPage moduleId="loyalty" title="Loyalty Transactions" />} />
+        <Route path="purchase-orders" element={<ModuleCrudPage moduleId="purchase-orders" title="Purchase Orders" />} />
+        <Route path="stock-ledger" element={<ModuleCrudPage moduleId="stock-ledger" title="Stock Ledger" />} />
+        <Route path="riders" element={<ModuleCrudPage moduleId="riders" title="Riders" />} />
+        <Route path="recipes" element={<ModuleCrudPage moduleId="recipes" title="Recipes" />} />
+        <Route path="pos" element={<POSPage />} />
+        <Route path="reports" element={<ReportsPage />} />
         <Route path="finance" element={<ModuleCrudPage moduleId="finance" title="Finance" />} />
         <Route path="cms" element={<ModuleCrudPage moduleId="cms" title="CMS" />} />
         <Route path="tenants" element={<ModuleCrudPage moduleId="tenants" title="Tenants" />} />
@@ -99,6 +108,7 @@ export default function App() {
             <Route path="/r/:slug" element={<RestaurantPortalPage />} />
             <Route path="/r/:slug/book" element={<CustomerBookTablePage />} />
             <Route path="/r/:slug/queue-guest" element={<GuestQueuePage />} />
+            <Route path="/r/:slug/qr/:token" element={<QROrderPage />} />
             <Route path="/r/:slug/login" element={<RestaurantLoginPage />} />
             <Route path="/r/:slug/customer/login" element={<CustomerLoginPage />} />
             <Route path="/r/:slug/select-branch" element={

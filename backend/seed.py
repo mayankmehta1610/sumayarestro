@@ -145,7 +145,7 @@ async def seed(force: bool = False):
                 branch = Branch(
                     restaurant_id=restaurant.id, name=bdata["name"], code=bdata["code"],
                     city=bdata["city"], address=f"{bdata['name']}, {bdata['city']}",
-                    phone="+91-9876543210", tax_rate=5.0,
+                    phone="+91-9876543210", tax_rate=5.0, service_charge_rate=5.0 if t["slug"] == "spice-garden" else 0.0,
                     delivery_enabled=bdata.get("delivery_enabled", False),
                 )
                 db.add(branch)

@@ -2,15 +2,19 @@ import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Plus, Minus, ArrowLeft, Send } from 'lucide-react';
-import { listResource, createOrder, markTableOccupied } from '../lib/api';
+import { listResource, createOrder, markTableOccupied, api } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
+import BillSummary from '../components/BillSummary';
 
 interface CartItem { menu_item_id: string; name: string; price: number; quantity: number; }
 
 export default function TableOrderPage() {
   const { slug, tableId } = useParams<{ slug: string; tableId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [orderType, setOrderType] = useState('dine_in');
+  const [couponCode, setCouponCode] = useState('');
 
   const { data: menuData } = useQuery({
     queryKey: ['menu-items'],
@@ -31,6 +35,7 @@ export default function TableOrderPage() {
       return createOrder({
         order_type: orderType,
         table_id: tableId,
+        coupon_code: couponCode || undefined,
         lines: cart.map((c) => ({ menu_item_id: c.menu_item_id, quantity: c.quantity })),
       });
     },
@@ -49,7 +54,21 @@ export default function TableOrderPage() {
   };
 
   const total = cart.reduce((s, c) => s + c.price * c.quantity, 0);
-  const tax = total * 0.05;
+  const branchId = user?.branch_id;
+
+  const { data: billPreview } = useQuery({
+    queryKey: ['bill-preview', branchId, cart, couponCode],
+    queryFn: async () => {
+      if (!branchId || cart.length === 0) return null;
+      const { data } = await api.post('/billing/preview', {
+        branch_id: branchId,
+        lines: cart.map((c) => ({ menu_item_id: c.menu_item_id, quantity: c.quantity })),
+        coupon_code: couponCode || undefined,
+      });
+      return data;
+    },
+    enabled: !!branchId && cart.length > 0,
+  });
 
   return (
     <div>
@@ -109,11 +128,14 @@ export default function TableOrderPage() {
                 </div>
               ))}
               <hr className="my-4 border-amber-warm/20" />
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between"><span>Subtotal</span><span>₹{total.toFixed(2)}</span></div>
-                <div className="flex justify-between"><span>Tax</span><span>₹{tax.toFixed(2)}</span></div>
-                <div className="flex justify-between text-lg font-bold"><span>Total</span><span className="text-chili">₹{(total + tax).toFixed(2)}</span></div>
-              </div>
+              <input className="input mb-3 text-sm" placeholder="Coupon code" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} />
+              {billPreview ? (
+                <BillSummary bill={billPreview} compact />
+              ) : (
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between"><span>Subtotal</span><span>₹{total.toFixed(2)}</span></div>
+                </div>
+              )}
               <button onClick={() => orderMutation.mutate()} disabled={orderMutation.isPending} className="btn-primary mt-4 w-full">
                 <Send className="h-4 w-4" /> {orderMutation.isPending ? 'Sending to Kitchen...' : 'Place Order & Send to Kitchen'}
               </button>

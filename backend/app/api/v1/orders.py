@@ -9,7 +9,8 @@ from sqlalchemy.orm import selectinload
 
 from app.api.deps import get_current_user
 from app.core.database import get_db
-from app.models import Branch, Coupon, KotTicket, MenuItem, OrderHeader, OrderLine, Table
+from app.models import Branch, KotTicket, MenuItem, OrderHeader, OrderLine, Table
+from app.services.billing import LineInput, apply_bill_to_order, calculate_bill, validate_coupon
 from app.schemas.common import apply_tenant_filter, get_or_404, paginate
 from app.schemas.entities import OrderCreate, OrderResponse, OrderUpdate, OrderLineResponse
 from app.services.notifications import notify_order_event
@@ -69,40 +70,22 @@ async def create_order(
     if not branch_id:
         raise HTTPException(status_code=400, detail="Branch context required. Select a branch first.")
     branch = await db.get(Branch, branch_id)
-    tax_rate = branch.tax_rate if branch else 5.0
+    if not branch:
+        raise HTTPException(status_code=400, detail="Branch not found")
 
-    gross = 0.0
-    lines_data = []
-    for line in payload.lines:
-        item = await db.get(MenuItem, line.menu_item_id)
-        if not item or not item.is_available:
-            raise HTTPException(status_code=400, detail=f"Menu item unavailable: {line.menu_item_id}")
-        line_total = item.price * line.quantity
-        gross += line_total
-        lines_data.append((item, line, line_total))
-
-    discount = 0.0
-    if payload.coupon_code:
-        coupon_result = await db.execute(
-            select(Coupon).where(
-                Coupon.code == payload.coupon_code,
-                Coupon.status == "active",
-            )
-        )
-        coupon = coupon_result.scalar_one_or_none()
-        if coupon:
-            if coupon.discount_type == "percent":
-                discount = gross * (coupon.discount_value / 100)
-            else:
-                discount = coupon.discount_value
-            coupon.used_count += 1
-
-    taxable = gross - discount
-    tax = taxable * (tax_rate / 100)
-    net = taxable + tax
+    line_inputs = [LineInput(menu_item_id=line.menu_item_id, quantity=line.quantity, modifiers=line.modifiers, notes=line.notes) for line in payload.lines]
+    bill = await calculate_bill(
+        db, branch, line_inputs,
+        coupon_code=payload.coupon_code,
+        restaurant_id=UUID(user["restaurant_id"]) if user.get("restaurant_id") else branch.restaurant_id,
+    )
+    if payload.coupon_code and bill.discount_amount == 0 and bill.coupon_code is None:
+        _, _, err = await validate_coupon(db, payload.coupon_code, branch.restaurant_id, bill.gross_amount)
+        if err:
+            raise HTTPException(status_code=400, detail=err)
 
     order = OrderHeader(
-        restaurant_id=UUID(user["restaurant_id"]) if user.get("restaurant_id") else item.restaurant_id,
+        restaurant_id=UUID(user["restaurant_id"]) if user.get("restaurant_id") else branch.restaurant_id,
         branch_id=branch_id,
         order_number=await _generate_order_number(db, branch_id),
         order_type=payload.order_type,
@@ -110,31 +93,39 @@ async def create_order(
         customer_id=payload.customer_id,
         waiter_id=UUID(user["id"]) if user.get("role") in ("waiter", "cashier", "branch_manager") else None,
         order_status="placed",
-        gross_amount=gross,
-        discount_amount=discount,
-        tax_amount=tax,
-        net_amount=net,
         payment_status="unpaid",
-        coupon_code=payload.coupon_code,
+        coupon_code=bill.coupon_code,
         notes=payload.notes,
         created_by=UUID(user["id"]),
     )
+    apply_bill_to_order(order, bill)
+    if payload.coupon_code and bill.coupon_code:
+        from app.models import Coupon
+        from sqlalchemy import select as sel
+        cr = await db.execute(sel(Coupon).where(Coupon.code == bill.coupon_code, Coupon.restaurant_id == order.restaurant_id))
+        c = cr.scalar_one_or_none()
+        if c:
+            c.used_count += 1
     db.add(order)
     await db.flush()
 
     order_lines = []
-    for item, line_input, line_total in lines_data:
+    for line in payload.lines:
+        item = await db.get(MenuItem, line.menu_item_id)
+        if not item or not item.is_available:
+            raise HTTPException(status_code=400, detail=f"Menu item unavailable: {line.menu_item_id}")
+        line_total = item.price * line.quantity
         ol = OrderLine(
             restaurant_id=order.restaurant_id,
             branch_id=branch_id,
             order_id=order.id,
             menu_item_id=item.id,
             item_name=item.name,
-            quantity=line_input.quantity,
+            quantity=line.quantity,
             unit_price=item.price,
             line_total=line_total,
-            modifiers=line_input.modifiers,
-            notes=line_input.notes,
+            modifiers=line.modifiers,
+            notes=line.notes,
             created_by=UUID(user["id"]),
         )
         db.add(ol)

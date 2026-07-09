@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Plus, Minus, ShoppingBag } from 'lucide-react';
-import { getPublicRestaurant, getPublicMenu, customerPlaceOrder, getTableFloor } from '../lib/api';
+import { getPublicRestaurant, getPublicMenu, customerPlaceOrder, getTableFloor, api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import BillSummary from '../components/BillSummary';
 
 interface CartItem { id: string; name: string; price: number; qty: number; }
 
@@ -15,6 +16,7 @@ export default function CustomerOrderPage() {
   const [orderType, setOrderType] = useState<'dine_in' | 'takeaway' | 'delivery'>('dine_in');
   const [tableId, setTableId] = useState('');
   const [branchId, setBranchId] = useState('');
+  const [couponCode, setCouponCode] = useState('');
 
   useEffect(() => {
     if (!user || user.role !== 'customer') navigate(`/r/${slug}/customer/login`);
@@ -45,6 +47,7 @@ export default function CustomerOrderPage() {
       table_id: orderType === 'dine_in' ? tableId : null,
       branch_id: activeBranch,
       lines: cart.map((c) => ({ menu_item_id: c.id, quantity: c.qty })),
+      coupon_code: couponCode || undefined,
     }),
     onSuccess: (data) => {
       setCart([]);
@@ -64,6 +67,20 @@ export default function CustomerOrderPage() {
 
   const total = cart.reduce((s, c) => s + c.price * c.qty, 0);
   const availableTables = (floorData?.items || []).filter((t: Record<string, unknown>) => t.table_status === 'available');
+
+  const { data: billPreview } = useQuery({
+    queryKey: ['cust-bill', activeBranch, cart, couponCode],
+    queryFn: async () => {
+      if (!activeBranch || cart.length === 0) return null;
+      const { data } = await api.post('/billing/preview', {
+        branch_id: activeBranch,
+        lines: cart.map((c) => ({ menu_item_id: c.id, quantity: c.qty })),
+        coupon_code: couponCode || undefined,
+      });
+      return data;
+    },
+    enabled: !!activeBranch && cart.length > 0,
+  });
 
   return (
     <div>
@@ -140,7 +157,10 @@ export default function CustomerOrderPage() {
                 </div>
               ))}
               <hr className="my-4 border-amber-warm/20" />
-              <p className="text-lg font-bold">Total: <span className="text-chili">₹{total.toFixed(2)}</span></p>
+              <input className="input mb-3 text-sm" placeholder="Coupon code (e.g. SPICE10)" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} />
+              {billPreview ? <BillSummary bill={billPreview} compact /> : (
+                <p className="text-lg font-bold">Total: <span className="text-chili">₹{total.toFixed(2)}</span></p>
+              )}
               <button onClick={() => orderMutation.mutate()} disabled={orderMutation.isPending || (orderType === 'dine_in' && !tableId)} className="btn-primary mt-4 w-full">
                 {orderMutation.isPending ? 'Placing Order...' : 'Place Order & Track'}
               </button>
