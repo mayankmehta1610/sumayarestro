@@ -59,6 +59,7 @@
     {
       "id": "05-customer-order",
       "title": "Customer Online Ordering",
+      "customerLogin": "customer@spice-garden.com",
       "narration": "The customer ordering page supports dine-in, takeaway, and delivery. For dine-in, they select their table from live availability. They browse the menu with images and prices, add items to cart, and place the order. The moment they confirm, a Kitchen Order Ticket — KOT — is created and sent to the kitchen display. The customer receives an in-app notification that their order was confirmed.",
       "path": "/r/spice-garden/order",
       "actions": [
@@ -120,6 +121,7 @@
     {
       "id": "09-waiter-order",
       "title": "Waiter POS at Table",
+      "login": { "email": "waiter@spice-garden.com", "path": "/r/spice-garden/login" },
       "narration": "At the table, the waiter builds the order from the full menu — adding items, adjusting quantities, and adding special notes. When submitted, the order goes straight to the kitchen as a KOT. This is the same flow whether the order comes from the waiter, the customer app, or online ordering.",
       "path": "/r/spice-garden/tables",
       "actions": [
@@ -185,6 +187,7 @@
     {
       "id": "13-waitlist-staff",
       "title": "Staff Waitlist Management",
+      "login": { "email": "waiter@spice-garden.com", "path": "/r/spice-garden/login" },
       "narration": "The waitlist page shows everyone waiting, sorted by arrival time. Staff click Call Next to notify the next guest, then Seat Guest when a table is ready. This replaces paper lists and shouting names across the dining room.",
       "path": "/r/spice-garden/waitlist",
       "actions": [
@@ -208,6 +211,7 @@
     {
       "id": "15-suppliers",
       "title": "Supplier Management",
+      "login": { "email": "inventory@spice-garden.com", "path": "/r/spice-garden/login" },
       "narration": "Suppliers are managed with full contact details and descriptions. Each supplier is linked to inventory items they provide. Restaurant owners and inventory managers can add, edit, and track supplier relationships — essential for cost control and procurement.",
       "path": "/r/spice-garden/suppliers",
       "actions": [
@@ -239,6 +243,7 @@
     {
       "id": "17-notifications",
       "title": "Real-time Notifications",
+      "login": { "email": "waiter@spice-garden.com", "path": "/r/spice-garden/login" },
       "narration": "Throughout the platform, the notification bell keeps everyone informed. Kitchen status changes, new orders, reservation updates, and waitlist events all generate in-app notifications. Staff see unread counts and can mark notifications as read.",
       "path": "/r/spice-garden/orders",
       "actions": [

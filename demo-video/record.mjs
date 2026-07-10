@@ -10,7 +10,8 @@ const outDir = join(__dirname, 'output', 'scenes');
 const audioDir = join(__dirname, 'output', 'audio');
 const PASSWORD = config.password;
 const BASE = config.baseUrl;
-const API = BASE.replace('sumaya-web', 'sumaya-api') + '/health';
+const API_BASE = BASE.replace('sumaya-web', 'sumaya-api') + '/api/v1';
+const SLUG = config.slug;
 
 mkdirSync(outDir, { recursive: true });
 
@@ -33,7 +34,7 @@ async function wakeServices() {
   console.log('Waking Render services (cold start)...');
   for (let i = 0; i < 20; i++) {
     try {
-      const res = await fetch(API, { signal: AbortSignal.timeout(60000) });
+      const res = await fetch(API_BASE.replace('/api/v1', '') + '/health', { signal: AbortSignal.timeout(60000) });
       if (res.ok) {
         const data = await res.json();
         console.log(`  API ready: ${JSON.stringify(data)}`);
@@ -59,19 +60,74 @@ async function logout(page) {
   }).catch(() => {});
 }
 
+async function injectAuth(page, { email, slug = SLUG, mode = 'staff' }) {
+  let data;
+  if (mode === 'super') {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: PASSWORD }),
+    });
+    if (!res.ok) throw new Error(`Super login failed: ${await res.text()}`);
+    data = await res.json();
+  } else if (mode === 'customer') {
+    const res = await fetch(`${API_BASE}/customer/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: PASSWORD, restaurant_slug: slug }),
+    });
+    if (!res.ok) throw new Error(`Customer login failed: ${await res.text()}`);
+    data = await res.json();
+    data.user = { ...data.user, restaurant_slug: slug, role: 'customer' };
+  } else {
+    const res = await fetch(`${API_BASE}/auth/restaurant-login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: PASSWORD, restaurant_slug: slug }),
+    });
+    if (!res.ok) throw new Error(`Staff login failed: ${await res.text()}`);
+    data = await res.json();
+  }
+
+  await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  await page.evaluate(({ token, user, branchId }) => {
+    localStorage.setItem('sumaya_token', token);
+    localStorage.setItem('sumaya_user', JSON.stringify(user));
+    if (branchId) localStorage.setItem('sumaya_branch', branchId);
+  }, { token: data.access_token, user: data.user, branchId: data.user.branch_id || null });
+
+  if (data.user.needs_branch_selection && data.user.branches?.length) {
+    const branchId = data.user.branches[0].id;
+    const res = await fetch(`${API_BASE}/auth/set-branch`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${data.access_token}`,
+      },
+      body: JSON.stringify({ branch_id: branchId }),
+    });
+    if (res.ok) {
+      const updated = { ...data.user, branch_id: branchId, needs_branch_selection: false };
+      await page.evaluate((user) => {
+        localStorage.setItem('sumaya_user', JSON.stringify(user));
+        localStorage.setItem('sumaya_branch', user.branch_id);
+      }, updated);
+    }
+  }
+}
+
 async function staffLogin(page, email, loginPath) {
   await logout(page);
-  await page.goto(BASE + loginPath, { waitUntil: 'domcontentloaded', timeout: 120000 });
-  await page.waitForSelector('input[type=email]', { timeout: 90000 });
-  await page.fill('input[type=email]', email);
-  await page.fill('input[type=password]', PASSWORD);
-  await page.click('button[type=submit]');
-  await page.waitForTimeout(5000);
-  const url = page.url();
-  if (url.includes('/login')) {
-    await page.click('button[type=submit]');
-    await page.waitForTimeout(8000);
+  await injectAuth(page, { email, mode: email.includes('sumayaresto.com') ? 'super' : 'staff' });
+  if (loginPath) {
+    await page.goto(BASE + loginPath, { waitUntil: 'domcontentloaded', timeout: 120000 });
+    await page.waitForTimeout(1500);
   }
+}
+
+async function customerLogin(page, email = 'customer@spice-garden.com') {
+  await logout(page);
+  await injectAuth(page, { email, mode: 'customer' });
 }
 
 async function padToDuration(page, startMs, targetSec) {
@@ -85,12 +141,27 @@ async function padToDuration(page, startMs, targetSec) {
   }
 }
 
-async function gotoAndWait(page, url) {
+async function gotoAndWait(page, url, scene) {
   await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 120000 });
-  await page.waitForTimeout(4000);
-  if (page.url().includes('/login') && !url.includes('/login') && !url.includes('/book') && !url.includes('/queue')) {
-    console.warn(`  Redirected to login from ${url}`);
+  await page.waitForTimeout(3000);
+  if (page.url().includes('/login') && !url.includes('/login') && !url.includes('/book') && !url.includes('/queue-guest')) {
+    console.warn(`  Redirected to login from ${url} — re-authenticating`);
+    if (scene?.login) {
+      await staffLogin(page, scene.login.email, scene.login.path);
+    } else if (scene?.customerLogin) {
+      await customerLogin(page, scene.customerLogin);
+    } else if (url.includes('/order') && !url.includes('/tables/')) {
+      await customerLogin(page);
+    } else if (scene?.id !== '02-super-admin') {
+      await staffLogin(page, 'waiter@spice-garden.com', `/r/${SLUG}/login`);
+    }
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 120000 });
+    await page.waitForTimeout(4000);
   }
+  await page.waitForFunction(
+    () => !document.body?.innerText?.includes('Loading...') || document.querySelector('nav, aside, main h1, .card'),
+    { timeout: 30000 },
+  ).catch(() => {});
 }
 
 async function runAction(page, action) {
@@ -149,8 +220,10 @@ async function recordScene(browser, scene) {
   try {
     if (scene.login) {
       await staffLogin(page, scene.login.email, scene.login.path);
+    } else if (scene.customerLogin) {
+      await customerLogin(page, scene.customerLogin);
     }
-    await gotoAndWait(page, BASE + scene.path);
+    await gotoAndWait(page, BASE + scene.path, scene);
 
     for (const action of scene.actions || []) {
       try {
