@@ -325,10 +325,12 @@ async function startExpoWeb() {
   } catch { /* start fresh */ }
 
   console.log('Starting Expo web for mobile capture...');
-  const child = spawn(process.platform === 'win32' ? 'npx.cmd' : 'npx', ['expo', 'start', '--web', '--port', String(port)], {
+  const cmd = `npx expo start --web --port ${port}`;
+  const child = spawn(cmd, [], {
     cwd: mobileDir,
     env: { ...process.env, EXPO_PUBLIC_API_URL: 'https://sumaya-api.onrender.com/api/v1', CI: '1' },
     stdio: 'ignore',
+    shell: true,
     detached: true,
   });
   child.unref();
@@ -380,22 +382,31 @@ async function captureMobileScreenshots(browser) {
 async function main() {
   await wakeServices();
   const only = process.argv[2];
-  let scenes = only ? config.scenes.filter((s) => s.id === only || s.id.startsWith(only)) : config.scenes;
-  const webScenes = scenes.filter((s) => !s.mobile);
+  let scenes = only === 'mobile'
+    ? config.scenes.filter((s) => s.mobile)
+    : only
+      ? config.scenes.filter((s) => s.id === only || s.id.startsWith(only))
+      : config.scenes;
+  const webScenes = scenes.filter((s) => !s.mobile && s.id !== '18-closing');
   const mobileScenes = scenes.filter((s) => s.mobile);
+  const closingScene = scenes.find((s) => s.id === '18-closing');
 
-  console.log(`Recording ${webScenes.length} web + ${mobileScenes.length} mobile scenes against ${BASE}`);
+  console.log(`Recording ${webScenes.length} web + ${mobileScenes.length} mobile + closing against ${BASE}`);
   const browser = await chromium.launch({ headless: true });
   for (const scene of webScenes) {
     await recordScene(browser, scene);
   }
 
   if (mobileScenes.length > 0) {
-    process.env.MOBILE_URL = await startExpoWeb();
+    if (!process.env.MOBILE_URL) process.env.MOBILE_URL = await startExpoWeb();
     for (const scene of mobileScenes) {
       await recordMobileScene(browser, scene);
     }
-    await captureMobileScreenshots(browser);
+    if (only === 'mobile' || !only) await captureMobileScreenshots(browser);
+  }
+
+  if (closingScene && !only) {
+    await recordScene(browser, closingScene);
   }
 
   await browser.close();
