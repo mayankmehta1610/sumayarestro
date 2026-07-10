@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Minus, Send } from 'lucide-react';
 import { listResource, createOrder } from '../lib/api';
+import MenuItemImage from '../components/MenuItemImage';
+import PageHeader from '../components/PageHeader';
 
 interface CartItem {
   menu_item_id: string;
@@ -61,8 +63,8 @@ export default function POSPage() {
   const total = subtotal + tax;
 
   return (
-    <div>
-      <h1 className="mb-6 font-display text-3xl font-bold text-espresso">Waiter POS</h1>
+    <div className="mx-auto max-w-6xl">
+      <PageHeader title="Waiter POS" subtitle="Quick order entry with photo menu — select table, tap items, send to kitchen." />
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <div className="mb-4 flex gap-3">
@@ -80,14 +82,16 @@ export default function POSPage() {
               ))}
             </select>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="menu-grid">
             {(menuData?.items || []).filter((i: Record<string, unknown>) => i.is_available).map((item: Record<string, unknown>) => (
               <button
                 key={String(item.id)}
+                data-testid="menu-item"
                 onClick={() => addToCart(item)}
-                className="card text-left transition hover:shadow-md hover:ring-2 hover:ring-amber-warm/40"
+                className="menu-card p-0"
               >
-                <div className="flex items-start justify-between">
+                <MenuItemImage name={String(item.name)} imageUrl={item.image_url as string} eager />
+                <div className="p-3 flex items-start justify-between">
                   <div>
                     <p className="font-semibold text-espresso">{String(item.name)}</p>
                     <p className="mt-1 text-xs text-coffee/60">{item.is_veg ? '🟢 Veg' : '🔴 Non-Veg'}</p>

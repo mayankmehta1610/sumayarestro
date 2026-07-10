@@ -8,6 +8,8 @@ import { formatCurrency, shadows } from '../utils';
 
 type CartItem = { id: string; name: string; price: number; qty: number; image?: string };
 
+import { resolveMenuImage } from '../menuImages';
+
 type Props = { slug: string; onPlaced: (id: string) => void };
 
 export default function CustomerOrderScreen({ slug, onPlaced }: Props) {
@@ -87,11 +89,7 @@ export default function CustomerOrderScreen({ slug, onPlaced }: Props) {
             <Text style={styles.catTitle}>{String(cat.name)}</Text>
             {((cat.items as Array<Record<string, unknown>>) || []).map((item) => (
               <TouchableOpacity key={String(item.id)} style={[styles.card, shadows.sm]} onPress={() => addItem(item)} activeOpacity={0.9}>
-                {item.image_url ? (
-                  <Image source={{ uri: String(item.image_url) }} style={styles.img} />
-                ) : (
-                  <View style={[styles.img, styles.placeholder]}><Text style={styles.letter}>{String(item.name).charAt(0)}</Text></View>
-                )}
+                <Image source={{ uri: resolveMenuImage(String(item.name), item.image_url as string) }} style={styles.img} />
                 <View style={styles.cardBody}>
                   <Text style={styles.name}>{String(item.name)}</Text>
                   <Text style={styles.desc} numberOfLines={2}>{String(item.description || '')}</Text>

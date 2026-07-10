@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Calendar, ChefHat, LogIn, ShoppingBag, Users, MapPin, Percent, Star } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getPublicRestaurant } from '../lib/api';
+import MenuItemImage from '../components/MenuItemImage';
 
 export default function RestaurantPortalPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -23,8 +24,8 @@ export default function RestaurantPortalPage() {
   const offers = (tenant?.offers as Array<Record<string, unknown>>) || (restaurant?.offers as Array<unknown>) || [];
   const featured = (restaurant?.featured_menu as Array<Record<string, unknown>>) || [];
   const gallery = (tenant?.gallery as string[]) || [];
-  const primary = String(tenant?.primary_color || '#F59E0B');
-  const secondary = String(tenant?.secondary_color || '#DC2626');
+  const primary = String(tenant?.primary_color || '#B45309');
+  const secondary = String(tenant?.secondary_color || '#C9A227');
 
   if (!restaurant) {
     return (
@@ -99,10 +100,8 @@ export default function RestaurantPortalPage() {
           </h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {featured.slice(0, 8).map((item) => (
-              <div key={String(item.id)} className="overflow-hidden rounded-2xl border border-amber-warm/20 bg-white shadow-sm transition hover:shadow-lg">
-                {item.image_url ? (
-                  <img src={String(item.image_url)} alt={String(item.name)} className="h-36 w-full object-cover" />
-                ) : null}
+              <div key={String(item.id)} className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm transition hover:shadow-lg">
+                <MenuItemImage name={String(item.name)} imageUrl={item.image_url as string} className="h-36 w-full object-cover" eager />
                 <div className="p-4">
                   <p className="font-semibold text-espresso">{String(item.name)}</p>
                   <p className="text-xs text-coffee/60 line-clamp-2">{String(item.description)}</p>
@@ -121,7 +120,7 @@ export default function RestaurantPortalPage() {
             <h2 className="mb-6 font-display text-3xl font-bold text-espresso">Our Space</h2>
             <div className="grid gap-3 sm:grid-cols-3">
               {gallery.map((url, i) => (
-                <img key={i} src={url} alt="" className="h-48 w-full rounded-2xl object-cover shadow-md" />
+                <img key={i} src={url} alt="" className="h-48 w-full rounded-2xl object-cover shadow-md" referrerPolicy="no-referrer" onError={(e) => { (e.target as HTMLImageElement).src = '/images/food-fallback.svg'; }} />
               ))}
             </div>
           </div>

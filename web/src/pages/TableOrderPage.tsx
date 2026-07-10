@@ -5,6 +5,8 @@ import { Plus, Minus, ArrowLeft, Send } from 'lucide-react';
 import { listResource, createOrder, markTableOccupied, api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import BillSummary from '../components/BillSummary';
+import MenuItemImage from '../components/MenuItemImage';
+import PageHeader from '../components/PageHeader';
 
 interface CartItem { menu_item_id: string; name: string; price: number; quantity: number; }
 
@@ -71,13 +73,14 @@ export default function TableOrderPage() {
   });
 
   return (
-    <div>
+    <div className="mx-auto max-w-6xl">
       <Link to={`/r/${slug}/tables`} className="mb-4 inline-flex items-center gap-1 text-sm text-coffee hover:text-chili">
         <ArrowLeft className="h-4 w-4" /> Back to Floor
       </Link>
-      <h1 className="font-display text-3xl font-bold text-espresso">
-        Table {table ? String(table.table_number) : tableId?.slice(0, 8)}
-      </h1>
+      <PageHeader
+        title={`Table ${table ? String(table.table_number) : tableId?.slice(0, 8)}`}
+        subtitle="Select dishes from the photo menu — order syncs to kitchen instantly."
+      />
 
       <div className="mt-4 flex gap-3">
         {['dine_in', 'takeaway'].map((t) => (
@@ -92,10 +95,11 @@ export default function TableOrderPage() {
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 grid gap-3 sm:grid-cols-2">
+        <div className="lg:col-span-2 menu-grid">
           {(menuData?.items || []).filter((i: Record<string, unknown>) => i.is_available).map((item: Record<string, unknown>) => (
-            <button key={String(item.id)} data-testid="menu-item" onClick={() => addItem(item)} className="card text-left hover:ring-2 hover:ring-primary/40 transition">
-              <div className="flex justify-between">
+            <button key={String(item.id)} data-testid="menu-item" onClick={() => addItem(item)} className="menu-card p-0">
+              <MenuItemImage name={String(item.name)} imageUrl={item.image_url as string} eager />
+              <div className="p-4 flex justify-between">
                 <div>
                   <p className="font-semibold">{String(item.name)}</p>
                   <p className="text-xs text-coffee/60">{item.is_veg ? '🟢 Veg' : '🔴 Non-Veg'}</p>

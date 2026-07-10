@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { Users, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { getTableFloor, markTableFree } from '../lib/api';
+import PageHeader from '../components/PageHeader';
 import clsx from 'clsx';
 
 const STATUS_CONFIG: Record<string, { bg: string; border: string; label: string; icon: typeof CheckCircle }> = {
@@ -31,17 +32,14 @@ export default function TableFloorPage() {
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-espresso">Table Floor</h1>
-          <p className="mt-1 text-coffee/70">Click a table to take order · Mark free when guests leave</p>
-        </div>
-        <div className="flex gap-3">
-          <span className="badge bg-green-100 text-green-800">{available} Available</span>
-          <span className="badge bg-red-100 text-red-800">{occupied} Occupied</span>
-          <button onClick={() => refetch()} className="btn-secondary text-sm">Refresh</button>
-        </div>
-      </div>
+      <PageHeader
+        title="Table Floor"
+        subtitle="Click a table to take order · Mark free when guests leave"
+      >
+        <span className="badge bg-green-100 text-green-800">{available} Available</span>
+        <span className="badge bg-red-100 text-red-800">{occupied} Occupied</span>
+        <button onClick={() => refetch()} className="btn-secondary text-sm">Refresh</button>
+      </PageHeader>
 
       {isLoading ? (
         <p className="text-center text-coffee/60 py-12">Loading tables from database...</p>
@@ -56,6 +54,7 @@ export default function TableFloorPage() {
             return (
               <div
                 key={String(table.id)}
+                data-testid="table-card"
                 className={clsx(
                   'relative rounded-2xl border-2 p-5 transition hover:shadow-lg',
                   cfg.bg, cfg.border,

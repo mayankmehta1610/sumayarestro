@@ -53,11 +53,35 @@ async def _ensure_demo_data() -> None:
         print(f"WARN: startup seed failed: {exc}")
 
 
+async def _patch_demo_data() -> None:
+    """Apply idempotent fixes to existing demo data (menu images, etc.)."""
+    from app.core.database import AsyncSessionLocal
+
+    import os
+    import sys
+
+    backend_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    if backend_root not in sys.path:
+        sys.path.insert(0, backend_root)
+    from seed_patch import patch_menu_images, patch_tenant_branding
+
+    try:
+        async with AsyncSessionLocal() as db:
+            n_menu = await patch_menu_images(db)
+            n_brand = await patch_tenant_branding(db)
+            await db.commit()
+            if n_menu or n_brand:
+                print(f"Patched demo data: {n_menu} menu images, {n_brand} tenant branding fields.")
+    except Exception as exc:
+        print(f"WARN: demo patch failed: {exc}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await _init_database()
     if settings.seed_on_startup:
         await _ensure_demo_data()
+    await _patch_demo_data()
     yield
     await engine.dispose()
 

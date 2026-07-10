@@ -19,11 +19,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen bg-surface">
       <aside className={clsx(
-        'fixed inset-y-0 left-0 z-50 w-72 transform bg-gradient-to-b from-surface-dark via-indigo-950 to-surface-dark text-white shadow-2xl transition-transform lg:static lg:translate-x-0',
+        'fixed inset-y-0 left-0 z-50 w-72 transform bg-gradient-to-b from-[#1C1917] via-[#292524] to-[#1C1917] text-white shadow-2xl transition-transform lg:static lg:translate-x-0',
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       )}>
         <div className="flex h-16 items-center gap-3 border-b border-white/10 px-5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent shadow-lg shadow-primary/40">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent shadow-lg">
             <UtensilsCrossed className="h-5 w-5 text-white" />
           </div>
           <div className="min-w-0">
@@ -75,7 +75,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </button>
           </div>
         </header>
-        <main className="flex-1 p-4 lg:p-8">{children}</main>
+        <main className="flex-1 p-4 lg:p-8">
+          <div className="mx-auto max-w-7xl">{children}</div>
+        </main>
       </div>
     </div>
   );

@@ -5,6 +5,8 @@ import { Plus, Minus, ShoppingBag } from 'lucide-react';
 import { getPublicRestaurant, getPublicMenu, customerPlaceOrder, getTableFloor, api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import BillSummary from '../components/BillSummary';
+import MenuItemImage from '../components/MenuItemImage';
+import PageHeader from '../components/PageHeader';
 
 interface CartItem { id: string; name: string; price: number; qty: number; }
 
@@ -83,9 +85,8 @@ export default function CustomerOrderPage() {
   });
 
   return (
-    <div>
-      <h1 className="font-display text-3xl font-bold text-espresso">Place Your Order</h1>
-      <p className="mt-1 text-coffee/70">Welcome, {user.full_name}</p>
+    <div className="mx-auto max-w-6xl">
+      <PageHeader title="Place Your Order" subtitle={`Welcome, ${user.full_name} — browse the menu and build your cart.`} />
 
       <div className="mt-6 card">
         <h2 className="font-semibold mb-3">Order Type *</h2>
@@ -127,10 +128,10 @@ export default function CustomerOrderPage() {
           {(menu?.categories || []).map((cat: { id: string; name: string; items: Array<{ id: string; name: string; price: number; is_veg: boolean }> }) => (
             <section key={cat.id}>
               <h2 className="font-display text-xl font-bold mb-3">{cat.name}</h2>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="menu-grid">
                 {cat.items.map((item: { id: string; name: string; price: number; is_veg: boolean; image_url?: string; description?: string }) => (
-                  <button key={item.id} data-testid="menu-item" onClick={() => addItem(item)} className="card text-left hover:shadow-md transition overflow-hidden p-0">
-                    {item.image_url && <img src={item.image_url} alt={item.name} className="h-32 w-full object-cover" />}
+                  <button key={item.id} data-testid="menu-item" onClick={() => addItem(item)} className="menu-card p-0">
+                    <MenuItemImage name={item.name} imageUrl={item.image_url} eager />
                     <div className="p-4 flex justify-between">
                       <div><p className="font-semibold">{item.name}</p><p className="text-xs text-coffee/60 line-clamp-1">{item.description}</p><p className="text-xs mt-1">{item.is_veg ? '🟢 Veg' : '🔴 Non-Veg'}</p></div>
                       <p className="font-bold text-chili">₹{item.price}</p>

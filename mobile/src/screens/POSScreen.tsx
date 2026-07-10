@@ -7,6 +7,8 @@ import { formatCurrency, shadows } from '../utils';
 
 type CartItem = { id: string; name: string; price: number; qty: number; image?: string };
 
+import { resolveMenuImage } from '../menuImages';
+
 type Props = { tableId?: string; onPlaced: (id: string) => void };
 
 export default function POSScreen({ tableId, onPlaced }: Props) {
@@ -73,11 +75,7 @@ export default function POSScreen({ tableId, onPlaced }: Props) {
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 12, paddingBottom: cart.length ? 120 : 24 }}>
         {filtered.map((item) => (
           <TouchableOpacity key={String(item.id)} style={[styles.card, shadows.sm]} onPress={() => addToCart(item)} activeOpacity={0.9}>
-            {item.image_url ? (
-              <Image source={{ uri: String(item.image_url) }} style={styles.img} />
-            ) : (
-              <View style={[styles.img, styles.imgPlaceholder]}><Text style={styles.imgLetter}>{String(item.name).charAt(0)}</Text></View>
-            )}
+            <Image source={{ uri: resolveMenuImage(String(item.name), item.image_url as string) }} style={styles.img} />
             <View style={styles.cardBody}>
               <Text style={styles.name}>{String(item.name)}</Text>
               <Text style={styles.desc} numberOfLines={2}>{String(item.description || 'Chef special')}</Text>

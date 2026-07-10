@@ -54,7 +54,7 @@ export default function ModuleCrudPage({ moduleId, title }: Props) {
             <thead><tr>{fields.slice(0, 4).map((f) => <th key={f.key}>{f.label}</th>)}<th>Actions</th></tr></thead>
             <tbody>
               {items.map((item: Record<string, unknown>) => (
-                <tr key={String(item.id)}>
+                <tr key={String(item.id)} data-testid="crud-row">
                   {fields.slice(0, 4).map((f) => <td key={f.key}>{String(item[f.key] ?? '—')}</td>)}
                   <td className="flex gap-1">
                     <button onClick={() => { setEditId(String(item.id)); const v: Record<string, unknown> = {}; fields.forEach((f) => { v[f.key] = item[f.key]; }); setForm(v); setModal('edit'); }} className="p-1.5 hover:bg-amber-warm/10 rounded-lg"><Pencil className="h-4 w-4" /></button>
