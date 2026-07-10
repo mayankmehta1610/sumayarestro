@@ -335,16 +335,16 @@ async def seed_bulk_data(db, slug_to_ids: dict, menu_items_by_branch: dict, tabl
             notes=f"Reservation note {i}",
         ))
 
-    # Waitlist (10)
+    # Waitlist (10 — 8 active in queue view)
     for i in range(1, 11):
         db.add(WaitlistEntry(
             restaurant_id=rid, branch_id=bid,
             guest_name=f"Walk-in Guest {i}", guest_phone=f"+91-91{i:08d}",
             party_size=2 + (i % 3), queue_number=i,
-            waitlist_status=["waiting", "waiting", "called", "seated", "cancelled"][i % 5],
+            waitlist_status=["waiting", "waiting", "waiting", "called", "waiting"][i % 5] if i <= 8 else ["seated", "cancelled"][i % 2],
             estimated_wait_mins=10 + i * 3,
-            called_at=now if i % 5 == 2 else None,
-            seated_at=now if i % 5 == 3 else None,
+            called_at=now if i % 5 == 3 else None,
+            seated_at=now if i > 8 else None,
         ))
 
     # Riders & delivery (10 riders, 10 deliveries from delivery orders)

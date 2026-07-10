@@ -1,9 +1,10 @@
 """Test mobile app API flows for all Spice Garden roles against production."""
 import json
+import os
 import sys
 import urllib.request
 
-API = "https://sumaya-api.onrender.com/api/v1"
+API = os.environ.get("VERIFY_API", "https://sumaya-api.onrender.com/api/v1")
 SLUG = "spice-garden"
 PASSWORD = "Sumaya@123"
 
