@@ -1,4 +1,4 @@
-"""Seed 9-10 demo records per module for Spice Garden (primary branch)."""
+"""Seed 8+ demo records per module for Spice Garden (primary branch)."""
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
@@ -66,9 +66,27 @@ async def seed_bulk_data(db, slug_to_ids: dict, menu_items_by_branch: dict, tabl
 
     cust_result = await db.execute(select(Customer).where(Customer.restaurant_id == rid).limit(10))
     customers = list(cust_result.scalars().all())
+    if len(customers) < 8:
+        for i in range(len(customers), 8):
+            c = Customer(
+                full_name=f"Demo Customer {i + 1}",
+                email=f"customer{i + 1}@spice-garden.com",
+                phone=f"+91-98{i:08d}",
+                loyalty_points=50 + i * 25,
+                tier=["bronze", "silver", "gold"][i % 3],
+                restaurant_id=rid,
+                branch_id=bid,
+            )
+            db.add(c)
+            customers.append(c)
+        await db.flush()
 
     menu_items = menu_items_by_branch.get(bid, [])
     tables = tables_by_branch.get(bid, [])
+
+    # Mark tables for realistic floor plan
+    for i, table in enumerate(tables[:12]):
+        table.table_status = ["occupied", "occupied", "occupied", "reserved", "available"][i % 5]
 
     now = datetime.now(timezone.utc)
 
@@ -124,6 +142,28 @@ async def seed_bulk_data(db, slug_to_ids: dict, menu_items_by_branch: dict, tabl
     # Ingredients extended + stock ledger (10 ledger entries)
     ing_result = await db.execute(select(Ingredient).where(Ingredient.branch_id == bid))
     ingredients = list(ing_result.scalars().all())
+    extra_ings = [
+        ("Basmati Rice", "kg", 120, 25, 95),
+        ("Paneer", "kg", 40, 8, 320),
+        ("Chicken", "kg", 35, 10, 280),
+        ("Tomatoes", "kg", 60, 15, 45),
+        ("Onions", "kg", 80, 20, 35),
+        ("Cream", "ltr", 25, 5, 180),
+        ("Ghee", "kg", 30, 6, 550),
+        ("Coriander", "kg", 15, 3, 120),
+    ]
+    if len(ingredients) < 8:
+        for name, unit, stock, reorder, cost in extra_ings:
+            if any(i.name == name for i in ingredients):
+                continue
+            ing = Ingredient(
+                restaurant_id=rid, branch_id=bid, name=name, unit=unit,
+                current_stock=stock, reorder_level=reorder, cost_per_unit=cost,
+                supplier_id=suppliers[0].id if suppliers else None,
+            )
+            db.add(ing)
+            ingredients.append(ing)
+        await db.flush()
     for i in range(10):
         if ingredients:
             ing = ingredients[i % len(ingredients)]
@@ -169,60 +209,122 @@ async def seed_bulk_data(db, slug_to_ids: dict, menu_items_by_branch: dict, tabl
             price=299 + i * 20, items={"items": [f"item_{i}", f"drink_{i}"]},
         ))
 
-    # Sample orders with KOTs — first 6 unpaid for billing; active kitchen queue
-    order_statuses = ["confirmed", "preparing", "ready", "served", "completed"] * 3
-    kot_statuses = ["queued", "queued", "preparing", "preparing", "ready", "ready", "served", "served", "served", "served", "queued", "preparing", "ready", "served", "completed"]
-    for i in range(15):
-        if not menu_items:
-            break
-        item = menu_items[i % len(menu_items)]
-        table = tables[i % len(tables)] if tables else None
-        gross = item.price * (i % 3 + 1)
-        discount = gross * 0.1 if i % 4 == 0 else 0
+
+    # --- Demo orders: 8 active KOTs, 8 unpaid billing, 8 paid history, 8 delivery ---
+    order_seq = 0
+    delivery_order_ids: list = []
+
+    def _calc_bill(gross: float, apply_discount: bool = False):
+        discount = round(gross * 0.1, 2) if apply_discount else 0
         taxable = gross - discount
         service = round(taxable * 0.05, 2)
         cgst = round((taxable + service) * 0.025, 2)
         sgst = cgst
         tax = cgst + sgst
         net = round(taxable + service + tax, 2)
+        return gross, discount, service, tax, net, {"cgst": cgst, "sgst": sgst, "service_charge": service}
+
+    async def _add_order(
+        *,
+        prefix: str,
+        order_type: str,
+        order_status: str,
+        payment_status: str,
+        kot_status: str | None,
+        table=None,
+        track_delivery: bool = False,
+    ):
+        nonlocal order_seq
+        if not menu_items:
+            return None
+        order_seq += 1
+        item = menu_items[(order_seq - 1) % len(menu_items)]
+        qty = (order_seq % 3) + 1
+        gross = item.price * qty
+        gross, discount, service, tax, net, tax_breakdown = _calc_bill(gross, order_seq % 4 == 0)
+        cust = customers[(order_seq - 1) % len(customers)] if customers else None
+        line_status = kot_status if kot_status and kot_status != "queued" else "pending"
+        if kot_status == "served":
+            line_status = "served"
         order = OrderHeader(
             restaurant_id=rid, branch_id=bid,
-            order_number=f"ORD-DEMO-{i + 1:04d}",
-            order_type=["dine_in", "takeaway", "delivery"][i % 3],
-            table_id=table.id if table and i % 3 == 0 else None,
-            customer_id=customers[i % len(customers)].id if customers else None,
+            order_number=f"{prefix}-{order_seq:04d}",
+            order_type=order_type,
+            table_id=table.id if table and order_type == "dine_in" else None,
+            customer_id=cust.id if cust else None,
             waiter_id=waiter.id if waiter else None,
-            order_status=order_statuses[i],
+            order_status=order_status,
             gross_amount=gross, discount_amount=discount, service_charge_amount=service,
             tax_amount=tax, net_amount=net,
-            tax_breakdown={"cgst": cgst, "sgst": sgst, "service_charge": service},
-            payment_status="paid" if i >= 8 else "unpaid",
-            coupon_code="SPICE10" if i % 4 == 0 else None,
-            notes=f"Demo order {i + 1}",
+            tax_breakdown=tax_breakdown,
+            payment_status=payment_status,
+            coupon_code="SPICE10" if order_seq % 4 == 0 else None,
+            notes=f"Demo order {order_seq}",
         )
         db.add(order)
         await db.flush()
         db.add(OrderLine(
             restaurant_id=rid, branch_id=bid, order_id=order.id,
-            menu_item_id=item.id, item_name=item.name, quantity=i % 3 + 1,
+            menu_item_id=item.id, item_name=item.name, quantity=qty,
             unit_price=item.price, line_total=gross,
-            line_status=kot_statuses[i] if kot_statuses[i] != "queued" else "pending",
+            line_status=line_status,
         ))
-        db.add(KotTicket(
-            restaurant_id=rid, branch_id=bid, order_id=order.id,
-            kot_number=f"KOT-DEMO-{i + 1:04d}",
-            kot_status=kot_statuses[i], kitchen_station="main", priority=i % 3,
-            fired_at=now - timedelta(minutes=30 - i * 2),
-            completed_at=now if kot_statuses[i] == "served" else None,
-        ))
-        if order_statuses[i] == "completed":
+        if kot_status:
+            db.add(KotTicket(
+                restaurant_id=rid, branch_id=bid, order_id=order.id,
+                kot_number=f"KOT-{prefix}-{order_seq:04d}",
+                kot_status=kot_status, kitchen_station="main", priority=order_seq % 3,
+                fired_at=now - timedelta(minutes=45 - order_seq * 3),
+                completed_at=now if kot_status == "served" else None,
+            ))
+        if payment_status == "paid":
             db.add(Payment(
                 restaurant_id=rid, branch_id=bid, order_id=order.id,
-                amount=order.net_amount, payment_method=["cash", "upi", "card"][i % 3],
-                payment_status="completed", transaction_id=f"TXN-{i + 1:06d}",
+                amount=order.net_amount, payment_method=["cash", "upi", "card"][order_seq % 3],
+                payment_status="completed", transaction_id=f"TXN-{order_seq:06d}",
             ))
+        if track_delivery:
+            delivery_order_ids.append(order.id)
+        return order
 
-    # Reservations (10)
+    kitchen_plan = [
+        ("queued", "confirmed"), ("queued", "confirmed"), ("queued", "confirmed"),
+        ("preparing", "preparing"), ("preparing", "preparing"), ("preparing", "preparing"),
+        ("ready", "ready"), ("ready", "ready"),
+    ]
+    for i, (ks, os_) in enumerate(kitchen_plan):
+        tbl = tables[i % len(tables)] if tables else None
+        await _add_order(
+            prefix="KITCHEN", order_type="dine_in", order_status=os_, payment_status="unpaid",
+            kot_status=ks, table=tbl,
+        )
+
+    billing_plan = [
+        ("served", "served"), ("served", "served"), ("ready", "ready"), ("ready", "ready"),
+        ("served", "served"), ("served", "served"), ("ready", "ready"), ("served", "served"),
+    ]
+    for i, (ks, os_) in enumerate(billing_plan):
+        tbl = tables[(i + 8) % len(tables)] if tables else None
+        await _add_order(
+            prefix="BILL", order_type="dine_in", order_status=os_, payment_status="unpaid",
+            kot_status=ks, table=tbl,
+        )
+
+    for i in range(8):
+        await _add_order(
+            prefix="PAID", order_type=["dine_in", "takeaway"][i % 2], order_status="completed",
+            payment_status="paid", kot_status="served",
+            table=tables[i % len(tables)] if tables and i % 2 == 0 else None,
+        )
+
+    for i in range(8):
+        await _add_order(
+            prefix="DLV", order_type="delivery", order_status=["confirmed", "preparing", "ready", "completed"][i % 4],
+            payment_status="paid" if i % 3 == 0 else "unpaid",
+            kot_status=["queued", "preparing", "ready", "served"][i % 4],
+            track_delivery=True,
+        )
+
     for i in range(1, 11):
         db.add(Reservation(
             restaurant_id=rid, branch_id=bid,
@@ -254,10 +356,20 @@ async def seed_bulk_data(db, slug_to_ids: dict, menu_items_by_branch: dict, tabl
         riders.append(r)
     await db.flush()
 
-    delivery_orders_result = await db.execute(
-        select(OrderHeader).where(OrderHeader.branch_id == bid, OrderHeader.order_type == "delivery").limit(10)
-    )
-    for i, order in enumerate(delivery_orders_result.scalars().all()):
+    delivery_orders = []
+    if delivery_order_ids:
+        dlv_result = await db.execute(
+            select(OrderHeader).where(OrderHeader.id.in_(delivery_order_ids)).order_by(OrderHeader.created_at)
+        )
+        delivery_orders = list(dlv_result.scalars().all())
+    if len(delivery_orders) < 8:
+        extra = await db.execute(
+            select(OrderHeader).where(
+                OrderHeader.branch_id == bid, OrderHeader.order_type == "delivery",
+            ).order_by(OrderHeader.created_at.desc()).limit(8)
+        )
+        delivery_orders = list(extra.scalars().all())
+    for i, order in enumerate(delivery_orders[:8]):
         db.add(DeliveryOrder(
             restaurant_id=rid, branch_id=bid, order_id=order.id,
             rider_id=riders[i % len(riders)].id,
@@ -341,7 +453,12 @@ async def seed_bulk_data(db, slug_to_ids: dict, menu_items_by_branch: dict, tabl
         ("Day closed", "Shift closed successfully", "day_close"),
     ]
     for title, msg, evt in notif_events:
-        uid = waiter.id if waiter else None
+        if evt in ("preparing", "ready", "served", "inventory_alert"):
+            uid = kitchen.id if kitchen else waiter.id if waiter else None
+        elif evt in ("payment", "day_close"):
+            uid = cashier.id if cashier else waiter.id if waiter else None
+        else:
+            uid = waiter.id if waiter else None
         db.add(Notification(
             restaurant_id=rid, branch_id=bid, user_id=uid,
             title=title, message=msg, channel="in_app",
@@ -409,4 +526,4 @@ async def seed_bulk_data(db, slug_to_ids: dict, menu_items_by_branch: dict, tabl
         ))
 
     await db.flush()
-    print("Bulk demo data seeded (9-10 records per module).")
+    print("Bulk demo data seeded (8+ records per module, active kitchen queue).")
