@@ -4,263 +4,211 @@
   "password": "Sumaya@123",
   "scenes": [
     {
-      "id": "01-restaurant-landing",
-      "title": "Spice Garden — Branded Homepage",
-      "narration": "Welcome to Spice Garden — a fully branded restaurant experience powered by Sumaya Restro. Every restaurant gets its own stunning homepage with hero imagery, food gallery, live offers, and chef's specials. Guests can order online, book a table, or join the waitlist — all from one beautiful URL.",
-      "path": "/r/spice-garden",
+      "id": "00-platform",
+      "title": "What is Sumaya Restro",
+      "roleKey": "public",
+      "narration": "Sumaya Restro is a complete restaurant management platform. Each restaurant gets its own branded website, staff back-office, kitchen display, GST billing, inventory, and mobile apps — all connected in real time. In this walkthrough we use one live demo restaurant to show how every role works together.",
+      "path": "/",
       "actions": [
-        { "type": "wait", "ms": 4000 },
-        { "type": "scroll", "y": 600 },
-        { "type": "wait", "ms": 2500 },
-        { "type": "scroll", "y": 900 },
-        { "type": "wait", "ms": 2500 },
-        { "type": "scroll", "y": 1200 },
-        { "type": "wait", "ms": 3000 }
-      ]
-    },
-    {
-      "id": "02-customer-register",
-      "title": "Customer Registration",
-      "registerViaApi": true,
-      "narration": "Customers register directly on the restaurant portal. Name, phone, email, and password — and they're instantly logged in with a CRM record created automatically. No app store required.",
-      "path": "/r/spice-garden/order",
-      "actions": [
-        { "type": "wait", "ms": 4000 },
-        { "type": "click", "text": "Takeaway" },
-        { "type": "wait", "ms": 1500 },
-        { "type": "click", "text": "Paneer Tikka" },
-        { "type": "wait", "ms": 2000 }
-      ]
-    },
-    {
-      "id": "03-customer-order",
-      "title": "Customer Online Ordering",
-      "customerLogin": "customer@spice-garden.com",
-      "narration": "The online ordering experience is rich and visual — menu items with photos, live bill preview with GST breakdown, and coupon support. Customers pick their table, add items to cart, and place the order. A Kitchen Order Ticket fires instantly to the kitchen display.",
-      "path": "/r/spice-garden/order",
-      "actions": [
-        { "type": "wait", "ms": 3000 },
-        { "type": "click", "text": "Takeaway" },
-        { "type": "wait", "ms": 2000 },
-        { "type": "click", "text": "Paneer Tikka" },
-        { "type": "wait", "ms": 800 },
-        { "type": "click", "text": "Dal Makhani" },
-        { "type": "wait", "ms": 800 },
-        { "type": "click", "text": "Butter Naan" },
-        { "type": "wait", "ms": 1500 },
+        { "type": "hold", "ms": 4000 },
         { "type": "scroll", "y": 500 },
-        { "type": "wait", "ms": 2000 }
-      ]
-    },
-    {
-      "id": "04-public-booking",
-      "title": "Table Reservation",
-      "narration": "Table booking works without login — perfect for first-time guests. Pick a branch, choose date and time, enter guest details, and reserve instantly. Staff see the booking on their reservations board in real time.",
-      "path": "/r/spice-garden/book",
-      "actions": [
-        { "type": "wait", "ms": 4000 },
-        { "type": "waitFor", "selector": "form" },
-        { "type": "fillLabel", "label": "Your Name", "value": "Priya Sharma" },
-        { "type": "fillLabel", "label": "Phone", "value": "+91 99887 76655" },
-        { "type": "fillLabel", "label": "Date & Time", "value": "2026-07-15T19:30" },
-        { "type": "wait", "ms": 1500 },
-        { "type": "click", "role": "button", "text": "Confirm Reservation" },
+        { "type": "wait", "ms": 3500 },
+        { "type": "scroll", "y": 600 },
         { "type": "wait", "ms": 4000 }
       ]
     },
     {
-      "id": "05-guest-waitlist",
-      "title": "Digital Waitlist",
-      "narration": "When the restaurant is full, guests join the digital waitlist from their phone. No buzzers, no shouting names. Staff call the next guest and seat them with one click when a table opens.",
-      "path": "/r/spice-garden/queue-guest",
+      "id": "01-restaurant",
+      "title": "Spice Garden — Demo Restaurant",
+      "roleKey": "public",
+      "narration": "Our demo restaurant is Spice Garden — Indian fine dining in Ahmedabad with two branches. Guests see a branded homepage with food photos, live offers, and chef specials. Staff use the same URL to log in. Next we follow each role, one at a time.",
+      "path": "/r/spice-garden",
+      "dataWait": "[data-testid='gallery-image']",
+      "dataMin": 6,
+      "imageWait": true,
       "actions": [
-        { "type": "wait", "ms": 2000 },
-        { "type": "fill", "selector": "input", "index": 0, "value": "Rahul Mehta" },
-        { "type": "fill", "selector": "input", "index": 1, "value": "+91 91234 56789" },
-        { "type": "wait", "ms": 1000 },
-        { "type": "click", "text": "Get Queue Number" },
+        { "type": "hold", "ms": 4000 },
+        { "type": "scroll", "y": 700 },
+        { "type": "wait", "ms": 3500 },
+        { "type": "scroll", "y": 500 },
+        { "type": "wait", "ms": 4000 }
+      ]
+    },
+    {
+      "id": "02-customer",
+      "title": "Customer Role — Online Ordering",
+      "roleKey": "customer",
+      "customerLogin": "customer@spice-garden.com",
+      "narration": "First, the customer role. Guests browse a visual menu — every dish has a photo and price. Add items to the cart and watch the bill update live with GST and service charge. They can also book a table or join the waitlist from the same branded site.",
+      "path": "/r/spice-garden/order",
+      "videoLeadInMs": 8000,
+      "dataWait": "[data-testid='menu-item'] img",
+      "dataMin": 4,
+      "preflight": { "path": "/menus/items/list?page_size=10", "min": 4 },
+      "actions": [
+        { "type": "hold", "ms": 3000 },
+        { "type": "click", "text": "Takeaway" },
+        { "type": "wait", "ms": 1500 },
+        { "type": "click", "selector": "[data-testid='menu-item']", "index": 0 },
+        { "type": "wait", "ms": 1200 },
+        { "type": "click", "selector": "[data-testid='menu-item']", "index": 1 },
+        { "type": "wait", "ms": 1200 },
+        { "type": "click", "selector": "[data-testid='menu-item']", "index": 2 },
+        { "type": "wait", "ms": 2500 },
+        { "type": "scroll", "y": 350 },
+        { "type": "wait", "ms": 3000 }
+      ]
+    },
+    {
+      "id": "03-waiter-floor",
+      "title": "Waiter Role — Table Floor",
+      "roleKey": "waiter",
+      "login": { "email": "waiter@spice-garden.com" },
+      "narration": "Now the waiter role. The table floor shows every table color-coded — green available, red occupied, amber reserved. Counters at the top track capacity. The waiter taps any table to start or add to an order.",
+      "path": "/r/spice-garden/tables",
+      "videoLeadInMs": 8000,
+      "dataWait": "a:has-text('Take Order'), a:has-text('Add / View Order')",
+      "dataMin": 8,
+      "preflight": { "path": "/tables/floor", "min": 8 },
+      "actions": [
+        { "type": "hold", "ms": 4000 },
+        { "type": "scroll", "y": 200 },
         { "type": "wait", "ms": 3500 }
       ]
     },
     {
-      "id": "06-waiter-floor",
-      "title": "Waiter Table Floor",
-      "login": { "email": "waiter@spice-garden.com", "path": "/r/spice-garden/login" },
-      "narration": "The waiter sees every table color-coded — green for available, red for occupied, amber for reserved. Tap any table to start taking an order. Live counts show available and occupied tables at a glance.",
+      "id": "04-waiter-pos",
+      "title": "Waiter Role — POS Order Entry",
+      "roleKey": "waiter",
+      "login": { "email": "waiter@spice-garden.com" },
+      "narration": "At the table, the waiter builds the order from a photo menu. Each tap adds to the cart. One submit fires a Kitchen Order Ticket to the display — no paper tickets, no shouting to the back.",
       "path": "/r/spice-garden/tables",
+      "videoLeadInMs": 8000,
+      "dataWait": "a:has-text('Take Order'), a:has-text('Add / View Order')",
+      "dataMin": 8,
+      "preflight": { "path": "/tables/floor", "min": 8 },
       "actions": [
+        { "type": "hold", "ms": 2000 },
+        { "type": "click", "text": "Take Order" },
         { "type": "wait", "ms": 4000 },
-        { "type": "scroll", "y": 200 },
+        { "type": "waitForMin", "selector": "[data-testid='menu-item'] img", "min": 4 },
+        { "type": "click", "selector": "[data-testid='menu-item']", "index": 0 },
+        { "type": "wait", "ms": 1200 },
+        { "type": "click", "selector": "[data-testid='menu-item']", "index": 2 },
         { "type": "wait", "ms": 3000 }
       ]
     },
     {
-      "id": "07-waiter-order",
-      "title": "Waiter POS",
-      "login": { "email": "waiter@spice-garden.com", "path": "/r/spice-garden/login" },
-      "narration": "At the table, the waiter builds the order from the full menu with images and prices. Add items, adjust quantities, apply notes. One tap sends the order straight to the kitchen as a KOT ticket.",
-      "path": "/r/spice-garden/tables",
-      "actions": [
-        { "type": "click", "selector": "a[href*='/order']", "first": true },
-        { "type": "wait", "ms": 5000 },
-        { "type": "click", "text": "Paneer Tikka" },
-        { "type": "wait", "ms": 800 },
-        { "type": "click", "text": "Biryani" },
-        { "type": "wait", "ms": 2000 }
-      ]
-    },
-    {
-      "id": "08-kitchen",
-      "title": "Kitchen Display System",
-      "login": { "email": "kitchen@spice-garden.com", "path": "/r/spice-garden/login" },
-      "narration": "The Kitchen Display System is the operational heart. Every order appears as a KOT ticket with table number, items, and status. Kitchen staff advance tickets through Queued, Preparing, Ready, and Served — each change notifies waiters and customers automatically.",
+      "id": "05-kitchen",
+      "title": "Kitchen Role — Display System",
+      "roleKey": "kitchen",
+      "login": { "email": "kitchen@spice-garden.com" },
+      "narration": "The kitchen role runs on a live display. Every ticket shows the KOT number, table, items, and status — queued, preparing, and ready. Tap to advance each ticket. Waiters and customers are notified automatically.",
       "path": "/r/spice-garden/kitchen",
+      "videoLeadInMs": 8000,
+      "dataWait": "[data-testid='kot-advance']",
+      "dataMin": 5,
+      "preflight": { "path": "/kot/queue", "min": 5 },
       "actions": [
-        { "type": "wait", "ms": 6000 },
-        { "type": "click", "text": "Start Preparing" },
+        { "type": "hold", "ms": 5000 },
+        { "type": "click", "selector": "[data-testid='kot-advance']", "first": true },
         { "type": "wait", "ms": 3000 },
-        { "type": "click", "text": "Mark Ready" },
+        { "type": "click", "selector": "[data-testid='kot-advance']", "first": true },
         { "type": "wait", "ms": 3000 },
-        { "type": "click", "text": "Mark Served" },
-        { "type": "wait", "ms": 3000 }
+        { "type": "scroll", "y": 250 },
+        { "type": "wait", "ms": 2500 }
       ]
     },
     {
-      "id": "09-cashier-billing",
-      "title": "Cashier Billing & GST",
-      "login": { "email": "cashier@spice-garden.com", "path": "/r/spice-garden/login" },
-      "narration": "At billing, the cashier sees all unpaid orders. Apply coupon SPICE10 for an instant ten percent discount. The bill shows subtotal, discount, service charge, CGST and SGST separately, then the final total. Collect via cash, UPI, or card — and print a formatted GST receipt.",
+      "id": "06-cashier",
+      "title": "Cashier Role — Billing & GST",
+      "roleKey": "cashier",
+      "login": { "email": "cashier@spice-garden.com" },
+      "narration": "The cashier role handles billing. Every unpaid order is listed with amount and status. Select an order, apply coupon SPICE10 for ten percent off, review CGST and SGST breakdown, then collect payment by cash, UPI, or card and print a GST receipt.",
       "path": "/r/spice-garden/billing",
+      "videoLeadInMs": 8000,
+      "dataWait": "[data-testid='billing-order']",
+      "dataMin": 5,
+      "preflight": { "path": "/orders/list?page_size=30", "min": 5, "filter": "unpaid" },
       "actions": [
-        { "type": "wait", "ms": 6000 },
-        { "type": "click", "selector": "button.w-full", "first": true },
+        { "type": "hold", "ms": 5000 },
+        { "type": "click", "selector": "[data-testid='billing-order']", "first": true },
         { "type": "wait", "ms": 2000 },
         { "type": "fill", "selector": "input[placeholder*='Coupon']", "value": "SPICE10" },
         { "type": "click", "role": "button", "text": "Apply" },
-        { "type": "wait", "ms": 2500 },
+        { "type": "wait", "ms": 2000 },
         { "type": "click", "text": "Cash" },
-        { "type": "wait", "ms": 1000 },
+        { "type": "wait", "ms": 1500 },
         { "type": "click", "role": "button", "text": "Collect" },
-        { "type": "wait", "ms": 3000 }
+        { "type": "wait", "ms": 2500 }
       ]
     },
     {
-      "id": "10-reservations",
-      "title": "Reservations Management",
-      "login": { "email": "waiter@spice-garden.com", "path": "/r/spice-garden/login" },
-      "narration": "Staff manage today's reservations from one board — guest name, party size, time, and status. Check guests in when they arrive, or cancel no-shows. Every booking from the public page appears here instantly.",
-      "path": "/r/spice-garden/reservations",
-      "actions": [
-        { "type": "wait", "ms": 4000 },
-        { "type": "scroll", "y": 300 },
-        { "type": "wait", "ms": 3000 }
-      ]
-    },
-    {
-      "id": "11-waitlist-staff",
-      "title": "Staff Waitlist",
-      "login": { "email": "waiter@spice-garden.com", "path": "/r/spice-garden/login" },
-      "narration": "The waitlist board shows everyone waiting, sorted by arrival time. Call Next to notify the guest, then Seat Guest when a table is ready — replacing paper lists and shouting across the dining room.",
-      "path": "/r/spice-garden/waitlist",
-      "actions": [
-        { "type": "wait", "ms": 4000 },
-        { "type": "scroll", "y": 200 },
-        { "type": "wait", "ms": 3000 }
-      ]
-    },
-    {
-      "id": "12-inventory",
-      "title": "Inventory Management",
-      "login": { "email": "inventory@spice-garden.com", "path": "/r/spice-garden/login" },
-      "narration": "Inventory tracks every ingredient — current stock, unit, reorder level, and supplier link. Low-stock items are flagged automatically, connecting directly to purchase orders and supplier management.",
+      "id": "07-inventory",
+      "title": "Inventory Role — Stock Control",
+      "roleKey": "inventory",
+      "login": { "email": "inventory@spice-garden.com" },
+      "narration": "The inventory manager sees every ingredient — current stock, unit, reorder level, and cost. Low-stock items are flagged so the team can raise purchase orders before service is disrupted. Suppliers and purchase orders are managed from the same module.",
       "path": "/r/spice-garden/inventory",
+      "videoLeadInMs": 8000,
+      "dataWait": "table.data-table tbody tr",
+      "dataMin": 8,
+      "preflight": { "path": "/inventory/list?page_size=20", "min": 8 },
       "actions": [
-        { "type": "wait", "ms": 4000 },
-        { "type": "scroll", "y": 400 },
-        { "type": "wait", "ms": 3000 }
+        { "type": "hold", "ms": 4000 },
+        { "type": "scroll", "y": 350 },
+        { "type": "wait", "ms": 3500 }
       ]
     },
     {
-      "id": "13-suppliers",
-      "title": "Suppliers & Procurement",
-      "login": { "email": "inventory@spice-garden.com", "path": "/r/spice-garden/login" },
-      "narration": "Suppliers are managed with full contact details and linked inventory items. Purchase orders, goods receipts, and stock ledger give complete procurement visibility from order to shelf.",
-      "path": "/r/spice-garden/suppliers",
+      "id": "08-owner",
+      "title": "Owner Role — Dashboard & Operations",
+      "roleKey": "owner",
+      "login": { "email": "owner@spice-garden.com" },
+      "narration": "The owner role opens the command center — today's sales, order count, active tables, and kitchen queue at a glance. From here the owner manages the menu with photos and prices, reviews staff roles, and monitors branch performance.",
+      "path": "/r/spice-garden/dashboard",
+      "videoLeadInMs": 8000,
+      "dataWait": "text=Today's",
+      "dataMin": 1,
+      "preflight": { "path": "/reports/dashboard", "min": 1 },
       "actions": [
-        { "type": "wait", "ms": 3000 },
-        { "type": "click", "selector": "nav a, aside a", "text": "Purchase Orders" },
-        { "type": "wait", "ms": 3000 },
+        { "type": "hold", "ms": 5000 },
+        { "type": "scroll", "y": 400 },
+        { "type": "wait", "ms": 2500 },
+        { "type": "click", "selector": "nav a, aside a", "text": "Menu" },
+        { "type": "wait", "ms": 4000 },
         { "type": "scroll", "y": 300 },
         { "type": "wait", "ms": 2500 }
       ]
     },
     {
-      "id": "14-owner-dashboard",
-      "title": "Owner Dashboard & AI Insights",
-      "login": { "email": "owner@spice-garden.com", "path": "/r/spice-garden/login" },
-      "narration": "The owner dashboard shows today's revenue, order count, active tables, and pending kitchen tickets. AI demand forecasting predicts top sellers for the week. Compare branches, manage staff, configure coupons, and control the branded landing page — all from one command center.",
-      "path": "/r/spice-garden/dashboard",
-      "actions": [
-        { "type": "wait", "ms": 5000 },
-        { "type": "scroll", "y": 500 },
-        { "type": "wait", "ms": 2500 },
-        { "type": "click", "selector": "nav a, aside a", "text": "Menu" },
-        { "type": "wait", "ms": 3000 },
-        { "type": "scroll", "y": 300 },
-        { "type": "wait", "ms": 2000 },
-        { "type": "click", "selector": "nav a, aside a", "text": "Staff" },
-        { "type": "wait", "ms": 3000 }
-      ]
-    },
-    {
-      "id": "15-mobile-waiter",
-      "title": "Mobile App — Waiter",
+      "id": "09-mobile",
+      "title": "Mobile Apps — Every Role",
       "mobile": true,
       "mobileRole": "waiter",
       "mobileScreen": "tables",
-      "narration": "Sumaya Restro includes a native mobile app for every role. Waiters carry the table floor in their pocket — see availability, take orders at the table, and mark tables free when guests leave. Real-time sync with the web POS and kitchen.",
+      "videoLeadInMs": 10000,
+      "narration": "Every role also works on mobile. Waiters carry the floor plan and POS in their pocket. Kitchen staff advance tickets on a tablet. Customers order with photos from their phone. All screens stay in sync with the web back-office in real time.",
       "actions": [
-        { "type": "wait", "ms": 3000 },
+        { "type": "hold", "ms": 3000 },
         { "type": "scroll", "y": 200 },
-        { "type": "wait", "ms": 2000 }
-      ]
-    },
-    {
-      "id": "16-mobile-kitchen",
-      "title": "Mobile App — Kitchen",
-      "mobile": true,
-      "mobileRole": "kitchen_staff",
-      "mobileScreen": "kitchen",
-      "narration": "Kitchen staff use the mobile KDS on tablets or phones. Every ticket shows order number, table, and items. Tap Advance to move through the workflow — the same tickets visible on the big kitchen display.",
-      "actions": [
-        { "type": "wait", "ms": 3000 },
-        { "type": "click", "text": "Advance" },
-        { "type": "wait", "ms": 2500 }
-      ]
-    },
-    {
-      "id": "17-mobile-customer",
-      "title": "Mobile App — Customer",
-      "mobile": true,
-      "mobileRole": "customer",
-      "mobileScreen": "customer-order",
-      "narration": "Customers order from the mobile app too — browse the menu, add to cart, and track their order live with a status timeline from confirmed to served. Registration takes seconds, no app store friction with Expo.",
-      "actions": [
-        { "type": "wait", "ms": 3000 },
-        { "type": "scroll", "y": 300 },
-        { "type": "wait", "ms": 2500 }
-      ]
-    },
-    {
-      "id": "18-closing",
-      "title": "Closing",
-      "narration": "That is Spice Garden on Sumaya Restro — end to end restaurant management. Branded customer experience, waiter POS, kitchen KDS, GST billing with coupons, inventory, suppliers, owner analytics, and mobile apps for every role. Two branches, one platform, zero compromise. Thank you for watching.",
-      "path": "/r/spice-garden",
-      "actions": [
-        { "type": "logout" },
         { "type": "wait", "ms": 2000 },
-        { "type": "scroll", "y": 800 },
-        { "type": "wait", "ms": 4000 }
+        { "type": "click", "text": "POS" },
+        { "type": "wait", "ms": 4000 },
+        { "type": "scroll", "y": 300 },
+        { "type": "wait", "ms": 3000 }
+      ]
+    },
+    {
+      "id": "10-closing",
+      "title": "Closing",
+      "roleKey": "public",
+      "narration": "That is Sumaya Restro with Spice Garden — one platform covering customer ordering, waiter POS, kitchen display, GST billing, inventory, owner analytics, and mobile apps for every role. Production ready. Thank you for watching.",
+      "path": "/",
+      "actions": [
+        { "type": "hold", "ms": 3000 },
+        { "type": "scroll", "y": 400 },
+        { "type": "wait", "ms": 5000 }
       ]
     }
   ]

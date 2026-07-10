@@ -4,6 +4,8 @@ import { Calendar, ChefHat, LogIn, ShoppingBag, Users, MapPin, Percent, Star } f
 import { useAuth } from '../context/AuthContext';
 import { getPublicRestaurant } from '../lib/api';
 import MenuItemImage from '../components/MenuItemImage';
+import GalleryImage from '../components/GalleryImage';
+import { resolveHeroImage } from '../lib/menuImages';
 
 export default function RestaurantPortalPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -40,7 +42,7 @@ export default function RestaurantPortalPage() {
       {/* Hero */}
       <div className="relative h-[420px] overflow-hidden">
         <img
-          src={String(tenant?.hero_image || gallery[0] || '')}
+          src={resolveHeroImage(String(tenant?.hero_image || gallery[0] || ''))}
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
         />
@@ -120,7 +122,7 @@ export default function RestaurantPortalPage() {
             <h2 className="mb-6 font-display text-3xl font-bold text-espresso">Our Space</h2>
             <div className="grid gap-3 sm:grid-cols-3">
               {gallery.map((url, i) => (
-                <img key={i} src={url} alt="" className="h-48 w-full rounded-2xl object-cover shadow-md" referrerPolicy="no-referrer" onError={(e) => { (e.target as HTMLImageElement).src = '/images/food-fallback.svg'; }} />
+                <GalleryImage key={i} src={String(url)} index={i} />
               ))}
             </div>
           </div>

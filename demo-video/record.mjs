@@ -144,15 +144,15 @@ async function injectAuth(page, scene) {
   return auth;
 }
 
-async function waitForImagesLoaded(page, min = 3) {
+async function waitForImagesLoaded(page, min = 3, selector = 'img') {
   await page.waitForFunction(
-    (m) => {
-      const imgs = Array.from(document.querySelectorAll('img'));
+    ({ m, sel }) => {
+      const imgs = Array.from(document.querySelectorAll(sel));
       const loaded = imgs.filter((img) => img.complete && img.naturalWidth > 0);
       return loaded.length >= m;
     },
-    min,
-    { timeout: 60000 },
+    { m: min, sel: selector },
+    { timeout: 90000 },
   ).catch(() => {});
 }
 
@@ -337,8 +337,9 @@ async function recordScene(browser, scene) {
     await waitForAppReady(page);
     if (scene.dataWait) {
       rowCount = await waitForDataStrict(page, scene);
-      if (scene.dataWait.includes('menu-item') || scene.path.includes('/order')) {
-        await waitForImagesLoaded(page, scene.dataMin || 3);
+      if (scene.dataWait.includes('menu-item') || scene.path.includes('/order') || scene.imageWait) {
+        const imgSel = scene.dataWait?.includes('gallery') ? "[data-testid='gallery-image']" : 'img';
+        await waitForImagesLoaded(page, scene.dataMin || 3, imgSel);
       }
     }
 
