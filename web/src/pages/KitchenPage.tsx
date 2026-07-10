@@ -88,6 +88,7 @@ export default function KitchenPage() {
                 </div>
                 {status !== 'served' && (
                   <button
+                    data-testid="kot-advance"
                     onClick={() => advanceMutation.mutate(String(kot.id))}
                     disabled={advanceMutation.isPending}
                     className="btn-primary mt-4 w-full text-sm"

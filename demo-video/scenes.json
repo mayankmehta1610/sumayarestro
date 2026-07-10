@@ -24,15 +24,14 @@
       "narration": "Customers register directly on the restaurant portal. Name, phone, email, and password — and they're instantly logged in with a CRM record created automatically. No app store required.",
       "path": "/r/spice-garden/customer/login",
       "actions": [
-        { "type": "logout" },
+        { "type": "wait", "ms": 3000 },
+        { "type": "click", "role": "button", "text": "Register" },
         { "type": "wait", "ms": 1000 },
-        { "type": "click", "text": "Register" },
-        { "type": "wait", "ms": 800 },
-        { "type": "fill", "selector": "input", "index": 0, "value": "Demo Guest" },
-        { "type": "fill", "selector": "input", "index": 1, "value": "+91 98765 43210" },
-        { "type": "fill", "selector": "input[type=email]", "value": "demo.guest.{{ts}}@spice-garden.com" },
-        { "type": "fill", "selector": "input[type=password]", "value": "Sumaya@123" },
-        { "type": "click", "text": "Register & Order" },
+        { "type": "fillLabel", "label": "Full Name", "value": "Demo Guest" },
+        { "type": "fillLabel", "label": "Phone", "value": "+91 98765 43210" },
+        { "type": "fillLabel", "label": "Email", "value": "demo.guest.{{ts}}@spice-garden.com" },
+        { "type": "fillLabel", "label": "Password", "value": "Sumaya@123" },
+        { "type": "click", "role": "button", "text": "Register & Order" },
         { "type": "wait", "ms": 5000 }
       ]
     },
@@ -44,6 +43,9 @@
       "path": "/r/spice-garden/order",
       "actions": [
         { "type": "wait", "ms": 3000 },
+        { "type": "click", "text": "Takeaway" },
+        { "type": "wait", "ms": 1500 },
+        { "type": "waitFor", "selector": "[data-testid='menu-item']" },
         { "type": "click", "selector": "[data-testid='menu-item']", "first": true },
         { "type": "wait", "ms": 800 },
         { "type": "click", "selector": "[data-testid='menu-item']", "index": 1 },
@@ -60,14 +62,14 @@
       "narration": "Table booking works without login — perfect for first-time guests. Pick a branch, choose date and time, enter guest details, and reserve instantly. Staff see the booking on their reservations board in real time.",
       "path": "/r/spice-garden/book",
       "actions": [
-        { "type": "logout" },
-        { "type": "wait", "ms": 3000 },
-        { "type": "fill", "selector": "input", "index": 0, "value": "Priya Sharma" },
-        { "type": "fill", "selector": "input", "index": 1, "value": "+91 99887 76655" },
-        { "type": "fill", "selector": "input[type=datetime-local]", "value": "2026-07-15T19:30" },
+        { "type": "wait", "ms": 4000 },
+        { "type": "waitFor", "selector": "form" },
+        { "type": "fillLabel", "label": "Your Name", "value": "Priya Sharma" },
+        { "type": "fillLabel", "label": "Phone", "value": "+91 99887 76655" },
+        { "type": "fillLabel", "label": "Date & Time", "value": "2026-07-15T19:30" },
         { "type": "wait", "ms": 1500 },
-        { "type": "click", "text": "Confirm Reservation" },
-        { "type": "wait", "ms": 3500 }
+        { "type": "click", "role": "button", "text": "Confirm Reservation" },
+        { "type": "wait", "ms": 4000 }
       ]
     },
     {
@@ -104,7 +106,8 @@
       "path": "/r/spice-garden/tables",
       "actions": [
         { "type": "click", "selector": "a[href*='/order']", "first": true },
-        { "type": "wait", "ms": 3000 },
+        { "type": "wait", "ms": 4000 },
+        { "type": "waitFor", "selector": "[data-testid='menu-item']" },
         { "type": "click", "selector": "[data-testid='menu-item']", "first": true },
         { "type": "wait", "ms": 800 },
         { "type": "click", "selector": "[data-testid='menu-item']", "index": 1 },
@@ -118,12 +121,13 @@
       "narration": "The Kitchen Display System is the operational heart. Every order appears as a KOT ticket with table number, items, and status. Kitchen staff advance tickets through Queued, Preparing, Ready, and Served — each change notifies waiters and customers automatically.",
       "path": "/r/spice-garden/kitchen",
       "actions": [
-        { "type": "wait", "ms": 4000 },
-        { "type": "click", "text": "Start Preparing" },
-        { "type": "wait", "ms": 2500 },
-        { "type": "click", "text": "Mark Ready" },
-        { "type": "wait", "ms": 2500 },
-        { "type": "click", "text": "Mark Served" },
+        { "type": "wait", "ms": 5000 },
+        { "type": "waitFor", "selector": "[data-testid='kot-advance']" },
+        { "type": "click", "selector": "[data-testid='kot-advance']", "first": true },
+        { "type": "wait", "ms": 3000 },
+        { "type": "click", "selector": "[data-testid='kot-advance']", "first": true },
+        { "type": "wait", "ms": 3000 },
+        { "type": "click", "selector": "[data-testid='kot-advance']", "first": true },
         { "type": "wait", "ms": 3000 }
       ]
     },
@@ -134,12 +138,13 @@
       "narration": "At billing, the cashier sees all unpaid orders. Apply coupon SPICE10 for an instant ten percent discount. The bill shows subtotal, discount, service charge, CGST and SGST separately, then the final total. Collect via cash, UPI, or card — and print a formatted GST receipt.",
       "path": "/r/spice-garden/billing",
       "actions": [
-        { "type": "wait", "ms": 4000 },
+        { "type": "wait", "ms": 5000 },
+        { "type": "waitFor", "selector": "[data-testid='billing-order']" },
         { "type": "click", "selector": "[data-testid='billing-order']", "first": true },
-        { "type": "wait", "ms": 1500 },
-        { "type": "fill", "selector": "input[placeholder*='Coupon']", "value": "SPICE10" },
-        { "type": "click", "text": "Apply" },
         { "type": "wait", "ms": 2000 },
+        { "type": "fill", "selector": "input[placeholder*='Coupon']", "value": "SPICE10" },
+        { "type": "click", "role": "button", "text": "Apply" },
+        { "type": "wait", "ms": 2500 },
         { "type": "click", "text": "Cash" },
         { "type": "wait", "ms": 1000 },
         { "type": "click", "selector": "[data-testid='collect-payment']" },

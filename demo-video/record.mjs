@@ -13,7 +13,13 @@ const BASE = config.baseUrl;
 const API_BASE = BASE.replace('sumaya-web', 'sumaya-api') + '/api/v1';
 const SLUG = config.slug;
 
+const WEAK_SCENES = ['02-customer-register', '03-customer-order', '04-public-booking', '07-waiter-order', '08-kitchen', '09-cashier-billing'];
+
 mkdirSync(outDir, { recursive: true });
+
+async function waitForContent(page, selector, timeout = 60000) {
+  await page.waitForSelector(selector, { timeout, state: 'visible' });
+}
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
@@ -183,11 +189,15 @@ async function runAction(page, action) {
     }
     case 'click': {
       if (action.text) {
-        const link = page.getByRole('link', { name: action.text });
-        const btn = page.getByRole('button', { name: action.text });
-        if (await link.count() > 0) await link.first().click({ timeout: 15000 });
-        else if (await btn.count() > 0) await btn.first().click({ timeout: 15000 });
-        else await page.getByText(action.text, { exact: false }).first().click({ timeout: 12000 });
+        if (action.role === 'button') {
+          await page.getByRole('button', { name: action.text }).click({ timeout: 20000 });
+        } else {
+          const link = page.getByRole('link', { name: action.text });
+          const btn = page.getByRole('button', { name: action.text });
+          if (await link.count() > 0) await link.first().click({ timeout: 15000 });
+          else if (await btn.count() > 0) await btn.first().click({ timeout: 15000 });
+          else await page.getByText(action.text, { exact: false }).first().click({ timeout: 12000 });
+        }
       } else {
         let loc = page.locator(action.selector);
         if (action.index !== undefined) loc = loc.nth(action.index);
@@ -196,6 +206,14 @@ async function runAction(page, action) {
       }
       break;
     }
+    case 'fillLabel': {
+      const val = String(action.value).replace(/\{\{ts\}\}/g, String(Date.now()));
+      await page.getByLabel(action.label, { exact: false }).fill(val, { timeout: 30000 });
+      break;
+    }
+    case 'waitFor':
+      await waitForContent(page, action.selector, action.timeout || 60000);
+      break;
     case 'logout':
       await logout(page);
       break;
@@ -382,7 +400,9 @@ async function captureMobileScreenshots(browser) {
 async function main() {
   await wakeServices();
   const only = process.argv[2];
-  let scenes = only === 'mobile'
+  let scenes = only === 'weak'
+    ? config.scenes.filter((s) => WEAK_SCENES.includes(s.id))
+    : only === 'mobile'
     ? config.scenes.filter((s) => s.mobile)
     : only
       ? config.scenes.filter((s) => s.id === only || s.id.startsWith(only))
