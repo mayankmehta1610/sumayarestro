@@ -159,7 +159,6 @@ async def seed_bulk_data(db, slug_to_ids: dict, menu_items_by_branch: dict, tabl
             ing = Ingredient(
                 restaurant_id=rid, branch_id=bid, name=name, unit=unit,
                 current_stock=stock, reorder_level=reorder, cost_per_unit=cost,
-                supplier_id=suppliers[0].id if suppliers else None,
             )
             db.add(ing)
             ingredients.append(ing)
