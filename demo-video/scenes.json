@@ -21,18 +21,15 @@
     {
       "id": "02-customer-register",
       "title": "Customer Registration",
+      "registerViaApi": true,
       "narration": "Customers register directly on the restaurant portal. Name, phone, email, and password — and they're instantly logged in with a CRM record created automatically. No app store required.",
-      "path": "/r/spice-garden/customer/login",
+      "path": "/r/spice-garden/order",
       "actions": [
-        { "type": "wait", "ms": 3000 },
-        { "type": "click", "role": "button", "text": "Register" },
-        { "type": "wait", "ms": 1000 },
-        { "type": "fillLabel", "label": "Full Name", "value": "Demo Guest" },
-        { "type": "fillLabel", "label": "Phone", "value": "+91 98765 43210" },
-        { "type": "fillLabel", "label": "Email", "value": "demo.guest.{{ts}}@spice-garden.com" },
-        { "type": "fillLabel", "label": "Password", "value": "Sumaya@123" },
-        { "type": "click", "role": "button", "text": "Register & Order" },
-        { "type": "wait", "ms": 5000 }
+        { "type": "wait", "ms": 4000 },
+        { "type": "click", "text": "Takeaway" },
+        { "type": "wait", "ms": 1500 },
+        { "type": "click", "text": "Paneer Tikka" },
+        { "type": "wait", "ms": 2000 }
       ]
     },
     {
@@ -44,13 +41,12 @@
       "actions": [
         { "type": "wait", "ms": 3000 },
         { "type": "click", "text": "Takeaway" },
-        { "type": "wait", "ms": 1500 },
-        { "type": "waitFor", "selector": "[data-testid='menu-item']" },
-        { "type": "click", "selector": "[data-testid='menu-item']", "first": true },
+        { "type": "wait", "ms": 2000 },
+        { "type": "click", "text": "Paneer Tikka" },
         { "type": "wait", "ms": 800 },
-        { "type": "click", "selector": "[data-testid='menu-item']", "index": 1 },
+        { "type": "click", "text": "Dal Makhani" },
         { "type": "wait", "ms": 800 },
-        { "type": "click", "selector": "[data-testid='menu-item']", "index": 2 },
+        { "type": "click", "text": "Butter Naan" },
         { "type": "wait", "ms": 1500 },
         { "type": "scroll", "y": 500 },
         { "type": "wait", "ms": 2000 }
@@ -106,11 +102,10 @@
       "path": "/r/spice-garden/tables",
       "actions": [
         { "type": "click", "selector": "a[href*='/order']", "first": true },
-        { "type": "wait", "ms": 4000 },
-        { "type": "waitFor", "selector": "[data-testid='menu-item']" },
-        { "type": "click", "selector": "[data-testid='menu-item']", "first": true },
+        { "type": "wait", "ms": 5000 },
+        { "type": "click", "text": "Paneer Tikka" },
         { "type": "wait", "ms": 800 },
-        { "type": "click", "selector": "[data-testid='menu-item']", "index": 1 },
+        { "type": "click", "text": "Biryani" },
         { "type": "wait", "ms": 2000 }
       ]
     },
@@ -121,13 +116,12 @@
       "narration": "The Kitchen Display System is the operational heart. Every order appears as a KOT ticket with table number, items, and status. Kitchen staff advance tickets through Queued, Preparing, Ready, and Served — each change notifies waiters and customers automatically.",
       "path": "/r/spice-garden/kitchen",
       "actions": [
-        { "type": "wait", "ms": 5000 },
-        { "type": "waitFor", "selector": "[data-testid='kot-advance']" },
-        { "type": "click", "selector": "[data-testid='kot-advance']", "first": true },
+        { "type": "wait", "ms": 6000 },
+        { "type": "click", "text": "Start Preparing" },
         { "type": "wait", "ms": 3000 },
-        { "type": "click", "selector": "[data-testid='kot-advance']", "first": true },
+        { "type": "click", "text": "Mark Ready" },
         { "type": "wait", "ms": 3000 },
-        { "type": "click", "selector": "[data-testid='kot-advance']", "first": true },
+        { "type": "click", "text": "Mark Served" },
         { "type": "wait", "ms": 3000 }
       ]
     },
@@ -138,16 +132,15 @@
       "narration": "At billing, the cashier sees all unpaid orders. Apply coupon SPICE10 for an instant ten percent discount. The bill shows subtotal, discount, service charge, CGST and SGST separately, then the final total. Collect via cash, UPI, or card — and print a formatted GST receipt.",
       "path": "/r/spice-garden/billing",
       "actions": [
-        { "type": "wait", "ms": 5000 },
-        { "type": "waitFor", "selector": "[data-testid='billing-order']" },
-        { "type": "click", "selector": "[data-testid='billing-order']", "first": true },
+        { "type": "wait", "ms": 6000 },
+        { "type": "click", "selector": "button.w-full", "first": true },
         { "type": "wait", "ms": 2000 },
         { "type": "fill", "selector": "input[placeholder*='Coupon']", "value": "SPICE10" },
         { "type": "click", "role": "button", "text": "Apply" },
         { "type": "wait", "ms": 2500 },
         { "type": "click", "text": "Cash" },
         { "type": "wait", "ms": 1000 },
-        { "type": "click", "selector": "[data-testid='collect-payment']" },
+        { "type": "click", "role": "button", "text": "Collect" },
         { "type": "wait", "ms": 3000 }
       ]
     },

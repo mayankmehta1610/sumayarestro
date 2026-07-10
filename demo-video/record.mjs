@@ -122,6 +122,29 @@ async function injectAuth(page, { email, slug = SLUG, mode = 'staff', baseUrl = 
   }
 }
 
+async function customerRegisterViaApi(page) {
+  const email = `demo.guest.${Date.now()}@spice-garden.com`;
+  const res = await fetch(`${API_BASE}/customer/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      full_name: 'Demo Guest',
+      email,
+      phone: '+91 98765 43210',
+      password: PASSWORD,
+      restaurant_slug: SLUG,
+    }),
+  });
+  if (!res.ok) throw new Error(`Register failed: ${await res.text()}`);
+  const data = await res.json();
+  const user = { ...data.user, restaurant_slug: SLUG, role: 'customer' };
+  await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  await page.evaluate(({ token, user }) => {
+    localStorage.setItem('sumaya_token', token);
+    localStorage.setItem('sumaya_user', JSON.stringify(user));
+  }, { token: data.access_token, user });
+}
+
 async function staffLogin(page, email, loginPath) {
   await logout(page);
   await injectAuth(page, { email, mode: email.includes('sumayaresto.com') ? 'super' : 'staff' });
@@ -190,7 +213,7 @@ async function runAction(page, action) {
     case 'click': {
       if (action.text) {
         if (action.role === 'button') {
-          await page.getByRole('button', { name: action.text }).click({ timeout: 20000 });
+          await page.getByRole('button', { name: new RegExp(action.text, 'i') }).first().click({ timeout: 20000 });
         } else {
           const link = page.getByRole('link', { name: action.text });
           const btn = page.getByRole('button', { name: action.text });
@@ -208,7 +231,13 @@ async function runAction(page, action) {
     }
     case 'fillLabel': {
       const val = String(action.value).replace(/\{\{ts\}\}/g, String(Date.now()));
-      await page.getByLabel(action.label, { exact: false }).fill(val, { timeout: 30000 });
+      const label = page.locator('.label', { hasText: action.label });
+      const field = label.locator('xpath=ancestor::div[1]//input | ancestor::div[1]//textarea').first();
+      if (await field.count() > 0) {
+        await field.fill(val, { timeout: 30000 });
+      } else {
+        await page.getByLabel(action.label, { exact: false }).fill(val, { timeout: 30000 });
+      }
       break;
     }
     case 'waitFor':
@@ -238,7 +267,9 @@ async function recordScene(browser, scene) {
   console.log(`Recording: ${scene.id} — ${scene.title} (target ${targetSec.toFixed(1)}s)`);
 
   try {
-    if (scene.login) {
+    if (scene.registerViaApi) {
+      await customerRegisterViaApi(page);
+    } else if (scene.login) {
       await staffLogin(page, scene.login.email, scene.login.path);
     } else if (scene.customerLogin) {
       await customerLogin(page, scene.customerLogin);
