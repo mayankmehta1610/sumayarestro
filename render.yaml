@@ -9,7 +9,6 @@ services:
     plan: free
     rootDir: backend
     buildCommand: bash build.sh
-    releaseCommand: python seed.py --force
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
@@ -23,6 +22,8 @@ services:
         value: sumaya_resto
       - key: CORS_ORIGINS
         value: https://sumaya-web.onrender.com
+      - key: SEED_ON_STARTUP
+        value: "true"
 
   - type: web
     name: sumaya-web

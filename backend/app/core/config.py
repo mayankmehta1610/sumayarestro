@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     db_schema: str = "sumaya_resto"
     redis_url: str = "redis://localhost:6379/0"
     cors_origins: str = "http://localhost:5173,http://localhost:3000,http://localhost:8081"
+    seed_on_startup: bool = True
 
     @property
     def cors_origin_list(self) -> list[str]:

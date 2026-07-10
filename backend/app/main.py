@@ -26,9 +26,35 @@ async def _init_database(retries: int = 30, delay: float = 2.0) -> None:
     raise RuntimeError("Database unavailable after retries") from last_error
 
 
+async def _ensure_demo_data() -> None:
+    """Seed demo data when database is empty (safe for Render cold starts)."""
+    from sqlalchemy import select
+
+    from app.core.database import AsyncSessionLocal
+    from app.models import Tenant
+
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(select(Tenant).limit(1))
+        if result.scalar_one_or_none():
+            return
+
+    import os
+    import sys
+
+    backend_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    if backend_root not in sys.path:
+        sys.path.insert(0, backend_root)
+    from seed import seed
+
+    await seed(force=False)
+    print("Demo data seeded on startup (empty database).")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await _init_database()
+    if settings.seed_on_startup:
+        await _ensure_demo_data()
     yield
     await engine.dispose()
 
