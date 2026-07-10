@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { getPublicRestaurant } from '../lib/api';
 import MenuItemImage from '../components/MenuItemImage';
 import GalleryImage from '../components/GalleryImage';
-import { resolveHeroImage } from '../lib/menuImages';
+import { GALLERY_IMAGES, resolveHeroImage } from '../lib/menuImages';
 
 export default function RestaurantPortalPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -25,7 +25,10 @@ export default function RestaurantPortalPage() {
   const branches = (restaurant?.branches as Array<Record<string, unknown>>) || [];
   const offers = (tenant?.offers as Array<Record<string, unknown>>) || (restaurant?.offers as Array<unknown>) || [];
   const featured = (restaurant?.featured_menu as Array<Record<string, unknown>>) || [];
-  const gallery = (tenant?.gallery as string[]) || [];
+  const gallery =
+    ((tenant?.gallery as string[]) || []).length >= 6
+      ? ((tenant?.gallery as string[]) || [])
+      : GALLERY_IMAGES;
   const primary = String(tenant?.primary_color || '#B45309');
   const secondary = String(tenant?.secondary_color || '#C9A227');
 

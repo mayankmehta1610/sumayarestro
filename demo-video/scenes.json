@@ -1,5 +1,6 @@
 {
   "baseUrl": "https://sumaya-web.onrender.com",
+  "apiBaseUrl": "https://sumaya-api.onrender.com/api/v1",
   "slug": "spice-garden",
   "password": "Sumaya@123",
   "scenes": [

@@ -45,10 +45,10 @@ def main() -> int:
 
     print(f"\nChecking tenant branding for {SLUG}...")
     try:
-        tenant = get_json(f"{API}/public/restaurants/{SLUG}")
-        settings = tenant.get("settings") or {}
-        hero = settings.get("hero_image") or tenant.get("hero_image")
-        gallery = settings.get("gallery") or []
+        tenant = get_json(f"{API}/auth/public/restaurant/{SLUG}")
+        t = tenant.get("tenant") or {}
+        hero = t.get("hero_image")
+        gallery = t.get("gallery") or []
         print(f"  hero_image: {hero}")
         print(f"  gallery count: {len(gallery)}")
         for i, url in enumerate(gallery[:6]):

@@ -9,8 +9,11 @@ const config = JSON.parse(readFileSync(join(__dirname, 'scenes.json'), 'utf8'));
 const outDir = join(__dirname, 'output', 'scenes');
 const audioDir = join(__dirname, 'output', 'audio');
 const PASSWORD = config.password;
-const BASE = config.baseUrl;
-const API_BASE = BASE.replace('sumaya-web', 'sumaya-api') + '/api/v1';
+const BASE = process.env.DEMO_BASE_URL || config.baseUrl;
+const API_BASE =
+  process.env.DEMO_API_URL ||
+  config.apiBaseUrl ||
+  (BASE.includes('sumaya-web') ? BASE.replace('sumaya-web', 'sumaya-api') + '/api/v1' : 'https://sumaya-api.onrender.com/api/v1');
 const SLUG = config.slug;
 
 mkdirSync(outDir, { recursive: true });
@@ -79,11 +82,19 @@ async function preflightData(token, scene) {
 }
 
 async function setupApiProxy(context) {
-  await context.route(`${API_BASE.replace('/api/v1', '')}/**`, async (route) => {
+  const apiOrigin = API_BASE.replace(/\/api\/v1\/?$/, '');
+  const patterns = [`${apiOrigin}/**`];
+  if (BASE.includes('localhost') || BASE.includes('127.0.0.1')) {
+    patterns.push(`${BASE.replace(/\/$/, '')}/api/**`);
+  }
+  const handler = async (route) => {
     const req = route.request();
     const url = req.url();
+    const target = url.includes('/api/') && !url.startsWith(apiOrigin)
+      ? url.replace(BASE.replace(/\/$/, ''), apiOrigin)
+      : url;
     try {
-      const res = await fetch(url, {
+      const res = await fetch(target, {
         method: req.method(),
         headers: req.headers(),
         body: req.postData() || undefined,
@@ -94,10 +105,13 @@ async function setupApiProxy(context) {
       res.headers.forEach((v, k) => { headers[k] = v; });
       await route.fulfill({ status: res.status, headers, body });
     } catch (err) {
-      console.warn(`  API proxy fail ${url}: ${err.message}`);
+      console.warn(`  API proxy fail ${target}: ${err.message}`);
       await route.continue();
     }
-  });
+  };
+  for (const pattern of patterns) {
+    await context.route(pattern, handler);
+  }
 }
 
 async function wakeServices() {
