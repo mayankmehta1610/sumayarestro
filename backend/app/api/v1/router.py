@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.crud_factory import make_crud_router
-from app.api.v1 import auth, billing_flow, ai, customer, inventory_flow, kot as kot_api, notifications_feed, orders, public, reports, reservations_flow, staff, tables as tables_api, waitlist
+from app.api.v1 import auth, billing_flow, ai, customer, inventory_flow, kot as kot_api, notifications_feed, orders, public, reports, reservations_flow, setup, staff, tables as tables_api, waitlist
 from app.models import (
     AuditLog,
     Branch,
@@ -52,6 +52,7 @@ from app.schemas import entities as s
 api_router = APIRouter()
 
 api_router.include_router(auth.router)
+api_router.include_router(setup.router)
 api_router.include_router(staff.router)
 api_router.include_router(tables_api.router)
 api_router.include_router(customer.router)

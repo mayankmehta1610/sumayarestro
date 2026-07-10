@@ -84,13 +84,22 @@ app.include_router(api_router, prefix=settings.api_v1_prefix)
 @app.get("/health")
 async def health():
     try:
+        from sqlalchemy import select
+        from app.core.database import AsyncSessionLocal
+        from app.models import Tenant
+
         async with engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
+        seeded = False
+        async with AsyncSessionLocal() as db:
+            result = await db.execute(select(Tenant).limit(1))
+            seeded = result.scalar_one_or_none() is not None
         return {
             "status": "healthy",
             "app": settings.app_name,
             "database": "connected",
             "schema": settings.db_schema,
+            "seeded": seeded,
         }
     except Exception as exc:
         return JSONResponse(
