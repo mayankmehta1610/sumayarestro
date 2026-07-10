@@ -46,8 +46,11 @@ async def _ensure_demo_data() -> None:
         sys.path.insert(0, backend_root)
     from seed import seed
 
-    await seed(force=False)
-    print("Demo data seeded on startup (empty database).")
+    try:
+        await seed(force=False)
+        print("Demo data seeded on startup (empty database).")
+    except Exception as exc:
+        print(f"WARN: startup seed failed: {exc}")
 
 
 @asynccontextmanager
