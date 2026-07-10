@@ -28,9 +28,11 @@ DEMO_DATA = [
         "restaurant": {"name": "Spice Garden", "slug": "spice-garden", "cuisine_type": "Indian"},
         "branches": [
             {"code": "BR-001", "name": "CG Road", "city": "Ahmedabad", "tables": 18,
-             "menu": ["Paneer Tikka", "Dal Makhani", "Butter Naan", "Lassi"]},
+             "menu": ["Paneer Tikka", "Dal Makhani", "Butter Naan", "Lassi", "Thali", "Biryani", "Chaat", "Kulfi",
+                      "Tandoori Chicken", "Palak Paneer", "Gulab Jamun", "Masala Dosa"]},
             {"code": "BR-002", "name": "Prahladnagar", "city": "Ahmedabad", "tables": 22,
-             "menu": ["Thali", "Biryani", "Chaat", "Kulfi"]},
+             "menu": ["Thali", "Biryani", "Chaat", "Kulfi", "Paneer Tikka", "Dal Makhani", "Butter Naan", "Lassi",
+                      "Fish Amritsari", "Mutton Rogan Josh", "Rasmalai", "Papad"]},
         ],
     },
     {
@@ -54,6 +56,8 @@ DEMO_DATA = [
 MENU_PRICES = {
     "Paneer Tikka": 280, "Dal Makhani": 220, "Butter Naan": 60, "Lassi": 80,
     "Thali": 350, "Biryani": 320, "Chaat": 120, "Kulfi": 90,
+    "Tandoori Chicken": 380, "Palak Paneer": 260, "Gulab Jamun": 110, "Masala Dosa": 180,
+    "Fish Amritsari": 420, "Mutton Rogan Josh": 480, "Rasmalai": 130, "Papad": 40,
     "Coffee": 150, "Pasta": 280, "Sandwich": 200, "Brownie": 120,
     "Fish Curry": 380, "Appam": 40, "Prawns Fry": 420,
 }

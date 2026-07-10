@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
-const API_BASE = Platform.select({
+const API_BASE = process.env.EXPO_PUBLIC_API_URL || Platform.select({
   android: 'http://10.0.2.2:8001/api/v1',
   ios: 'http://localhost:8001/api/v1',
   default: 'http://localhost:8001/api/v1',

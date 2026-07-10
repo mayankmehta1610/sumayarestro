@@ -1,47 +1,70 @@
 @import "tailwindcss";
 
 @theme {
+  --color-primary: #6366F1;
+  --color-primary-dark: #4F46E5;
+  --color-accent: #F43F5E;
+  --color-accent-dark: #E11D48;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-surface: #F8FAFC;
+  --color-surface-dark: #0F172A;
+  --color-ink: #0F172A;
+  --color-muted: #64748B;
+  --color-border: #E2E8F0;
+  /* Legacy aliases — mapped to new palette */
   --color-amber-warm: #F59E0B;
-  --color-chili: #DC2626;
-  --color-coffee: #78350F;
-  --color-cream: #FFFBEB;
-  --color-espresso: #451A03;
-  --font-display: "Playfair Display", Georgia, serif;
-  --font-body: "DM Sans", system-ui, sans-serif;
+  --color-chili: #F43F5E;
+  --color-coffee: #475569;
+  --color-cream: #F8FAFC;
+  --color-espresso: #0F172A;
+  --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
 }
 
 @layer base {
   * { box-sizing: border-box; }
   body {
-    @apply m-0 min-h-screen bg-cream text-espresso antialiased;
+    @apply m-0 min-h-screen bg-surface text-ink antialiased;
     font-family: var(--font-body);
+    background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.12), transparent);
   }
   h1, h2, h3 { font-family: var(--font-display); }
 }
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-chili px-5 py-2.5 font-semibold text-white shadow-lg shadow-chili/25 transition hover:bg-red-700 active:scale-[0.98] disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-primary-dark px-5 py-2.5 font-semibold text-white shadow-lg shadow-primary/30 transition hover:shadow-primary/50 hover:brightness-110 active:scale-[0.98] disabled:opacity-50;
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border-2 border-amber-warm bg-white px-5 py-2.5 font-semibold text-coffee transition hover:bg-amber-warm/10 active:scale-[0.98];
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border-2 border-primary/30 bg-white px-5 py-2.5 font-semibold text-primary transition hover:bg-primary/5 hover:border-primary active:scale-[0.98];
   }
   .card {
-    @apply rounded-2xl border border-amber-warm/20 bg-white p-6 shadow-sm;
+    @apply rounded-2xl border border-border bg-white p-6 shadow-sm shadow-slate-200/60;
   }
   .input {
-    @apply w-full rounded-xl border border-amber-warm/30 bg-white px-4 py-2.5 text-espresso outline-none transition focus:border-amber-warm focus:ring-2 focus:ring-amber-warm/20;
+    @apply w-full rounded-xl border border-border bg-white px-4 py-2.5 text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20;
   }
-  .label { @apply mb-1.5 block text-sm font-medium text-coffee; }
+  .label { @apply mb-1.5 block text-sm font-medium text-muted; }
   .badge {
     @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
   }
-  .table-wrap { @apply overflow-x-auto rounded-2xl border border-amber-warm/20 bg-white; }
+  .table-wrap { @apply overflow-x-auto rounded-2xl border border-border bg-white shadow-sm; }
   .data-table { @apply w-full text-left text-sm; }
-  .data-table th { @apply bg-amber-warm/10 px-4 py-3 font-semibold text-coffee; }
-  .data-table td { @apply border-t border-amber-warm/10 px-4 py-3; }
+  .data-table th { @apply bg-primary/5 px-4 py-3 font-semibold text-ink; }
+  .data-table td { @apply border-t border-border px-4 py-3; }
   .sidebar-link {
-    @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-cream/80 transition hover:bg-white/10 hover:text-white;
+    @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white/70 transition hover:bg-white/10 hover:text-white;
   }
-  .sidebar-link.active { @apply bg-white/15 text-white shadow-inner; }
+  .sidebar-link.active {
+    @apply bg-white/15 text-white shadow-inner;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+  }
+  .stat-card {
+    @apply rounded-2xl border border-border bg-white p-6 shadow-sm shadow-slate-200/60 relative overflow-hidden;
+  }
+  .stat-card::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 pointer-events-none;
+  }
 }

@@ -169,10 +169,10 @@ async def seed_bulk_data(db, slug_to_ids: dict, menu_items_by_branch: dict, tabl
             price=299 + i * 20, items={"items": [f"item_{i}", f"drink_{i}"]},
         ))
 
-    # Sample orders with KOTs in various statuses (10)
-    order_statuses = ["confirmed", "preparing", "ready", "served", "completed"] * 2
-    kot_statuses = ["queued", "preparing", "ready", "served", "served"] * 2
-    for i in range(10):
+    # Sample orders with KOTs — first 6 unpaid for billing; active kitchen queue
+    order_statuses = ["confirmed", "preparing", "ready", "served", "completed"] * 3
+    kot_statuses = ["queued", "queued", "preparing", "preparing", "ready", "ready", "served", "served", "served", "served", "queued", "preparing", "ready", "served", "completed"]
+    for i in range(15):
         if not menu_items:
             break
         item = menu_items[i % len(menu_items)]
@@ -196,7 +196,7 @@ async def seed_bulk_data(db, slug_to_ids: dict, menu_items_by_branch: dict, tabl
             gross_amount=gross, discount_amount=discount, service_charge_amount=service,
             tax_amount=tax, net_amount=net,
             tax_breakdown={"cgst": cgst, "sgst": sgst, "service_charge": service},
-            payment_status="paid" if i >= 6 else "unpaid",
+            payment_status="paid" if i >= 8 else "unpaid",
             coupon_code="SPICE10" if i % 4 == 0 else None,
             notes=f"Demo order {i + 1}",
         )

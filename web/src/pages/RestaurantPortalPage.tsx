@@ -35,7 +35,7 @@ export default function RestaurantPortalPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: `linear-gradient(180deg, ${primary}08 0%, #FFFBEB 40%)` }}>
+    <div className="min-h-screen bg-surface" style={{ background: `linear-gradient(180deg, ${primary}15 0%, #F8FAFC 35%, #fff 100%)` }}>
       {/* Hero */}
       <div className="relative h-[420px] overflow-hidden">
         <img

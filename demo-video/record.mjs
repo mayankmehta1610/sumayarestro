@@ -60,7 +60,7 @@ async function logout(page) {
   }).catch(() => {});
 }
 
-async function injectAuth(page, { email, slug = SLUG, mode = 'staff' }) {
+async function injectAuth(page, { email, slug = SLUG, mode = 'staff', baseUrl = BASE }) {
   let data;
   if (mode === 'super') {
     const res = await fetch(`${API_BASE}/auth/login`, {
@@ -89,7 +89,7 @@ async function injectAuth(page, { email, slug = SLUG, mode = 'staff' }) {
     data = await res.json();
   }
 
-  await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.evaluate(({ token, user, branchId }) => {
     localStorage.setItem('sumaya_token', token);
     localStorage.setItem('sumaya_user', JSON.stringify(user));
@@ -152,7 +152,7 @@ async function gotoAndWait(page, url, scene) {
       await customerLogin(page, scene.customerLogin);
     } else if (url.includes('/order') && !url.includes('/tables/')) {
       await customerLogin(page);
-    } else if (scene?.id !== '02-super-admin') {
+    } else if (scene?.id && !scene.id.startsWith('01-')) {
       await staffLogin(page, 'waiter@spice-garden.com', `/r/${SLUG}/login`);
     }
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 120000 });
@@ -189,8 +189,10 @@ async function runAction(page, action) {
         else if (await btn.count() > 0) await btn.first().click({ timeout: 15000 });
         else await page.getByText(action.text, { exact: false }).first().click({ timeout: 12000 });
       } else {
-        const loc = page.locator(action.selector);
-        await (action.first ? loc.first() : loc).click({ timeout: 15000 });
+        let loc = page.locator(action.selector);
+        if (action.index !== undefined) loc = loc.nth(action.index);
+        else if (action.first) loc = loc.first();
+        await loc.click({ timeout: 15000 });
       }
       break;
     }
@@ -250,15 +252,152 @@ async function recordScene(browser, scene) {
   }
 }
 
+async function recordMobileScene(browser, scene) {
+  const MOBILE_URL = process.env.MOBILE_URL || 'http://localhost:19006';
+  const videoDir = join(outDir, scene.id);
+  mkdirSync(videoDir, { recursive: true });
+  const targetSec = audioDuration(scene.id) + 0.5;
+  const roleEmails = {
+    waiter: 'waiter@spice-garden.com',
+    kitchen_staff: 'kitchen@spice-garden.com',
+    customer: 'customer@spice-garden.com',
+    cashier: 'cashier@spice-garden.com',
+  };
+  const email = roleEmails[scene.mobileRole] || 'waiter@spice-garden.com';
+  const mode = scene.mobileRole === 'customer' ? 'customer' : 'staff';
+
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    recordVideo: { dir: videoDir, size: { width: 390, height: 844 } },
+    locale: 'en-IN',
+    deviceScaleFactor: 2,
+  });
+  const page = await context.newPage();
+  const startMs = Date.now();
+  console.log(`Recording MOBILE: ${scene.id} — ${scene.title}`);
+
+  try {
+    await page.goto(MOBILE_URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
+    await page.waitForTimeout(3000);
+    await injectAuth(page, { email, mode, baseUrl: MOBILE_URL });
+    await page.goto(MOBILE_URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
+    await page.waitForTimeout(4000);
+
+    const tabMap = { tables: 'Tables', kitchen: 'Kitchen', orders: 'Orders', pos: 'POS', 'customer-order': 'Order' };
+    const tab = tabMap[scene.mobileScreen];
+    if (tab) {
+      await page.getByText(tab, { exact: true }).click({ timeout: 10000 }).catch(() => {});
+      await page.waitForTimeout(2000);
+    }
+
+    for (const action of scene.actions || []) {
+      try { await runAction(page, action); } catch (err) {
+        console.warn(`  Mobile action warning in ${scene.id}:`, err.message);
+        await page.waitForTimeout(1500);
+      }
+    }
+    await padToDuration(page, startMs, targetSec);
+  } catch (err) {
+    console.error(`  Mobile scene error ${scene.id}:`, err.message);
+    await padToDuration(page, startMs, targetSec);
+  }
+
+  await context.close();
+  const files = readdirSync(videoDir).filter((f) => f.endsWith('.webm'));
+  if (files.length > 0) {
+    const src = join(videoDir, files[0]);
+    const dest = join(outDir, `${scene.id}.webm`);
+    if (existsSync(dest)) try { unlinkSync(dest); } catch { /* */ }
+    renameSync(src, dest);
+    console.log(`  Saved mobile: ${dest}`);
+  }
+}
+
+async function startExpoWeb() {
+  const { spawn } = await import('child_process');
+  const mobileDir = join(__dirname, '..', 'mobile');
+  const port = 19006;
+  const url = `http://localhost:${port}`;
+
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
+    if (res.ok) { console.log('Expo web already running'); return url; }
+  } catch { /* start fresh */ }
+
+  console.log('Starting Expo web for mobile capture...');
+  const child = spawn(process.platform === 'win32' ? 'npx.cmd' : 'npx', ['expo', 'start', '--web', '--port', String(port)], {
+    cwd: mobileDir,
+    env: { ...process.env, EXPO_PUBLIC_API_URL: 'https://sumaya-api.onrender.com/api/v1', CI: '1' },
+    stdio: 'ignore',
+    detached: true,
+  });
+  child.unref();
+
+  for (let i = 0; i < 60; i++) {
+    await sleep(3000);
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+      if (res.ok) { console.log(`Expo web ready at ${url}`); return url; }
+    } catch { console.log(`  Waiting for Expo web... ${i + 1}`); }
+  }
+  throw new Error('Expo web failed to start');
+}
+
+async function captureMobileScreenshots(browser) {
+  const MOBILE_URL = process.env.MOBILE_URL || 'http://localhost:19006';
+  const shotDir = join(__dirname, 'output', 'mobile-screenshots');
+  mkdirSync(shotDir, { recursive: true });
+  const roles = [
+    { name: 'login', mode: null },
+    { name: 'waiter-tables', email: 'waiter@spice-garden.com', mode: 'staff', tab: 'Tables' },
+    { name: 'waiter-pos', email: 'waiter@spice-garden.com', mode: 'staff', tab: 'POS' },
+    { name: 'kitchen', email: 'kitchen@spice-garden.com', mode: 'staff', tab: 'Kitchen' },
+    { name: 'orders', email: 'waiter@spice-garden.com', mode: 'staff', tab: 'Orders' },
+    { name: 'customer-order', email: 'customer@spice-garden.com', mode: 'customer', tab: 'Order' },
+  ];
+
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+  const page = await context.newPage();
+
+  for (const r of roles) {
+    await page.goto(MOBILE_URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
+    await page.waitForTimeout(2000);
+    if (r.mode) {
+      await page.evaluate(() => { localStorage.clear(); });
+      await injectAuth(page, { email: r.email, mode: r.mode, baseUrl: MOBILE_URL });
+      await page.goto(MOBILE_URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
+      await page.waitForTimeout(3000);
+      if (r.tab) await page.getByText(r.tab, { exact: true }).click({ timeout: 8000 }).catch(() => {});
+      await page.waitForTimeout(1500);
+    }
+    const path = join(shotDir, `${r.name}.png`);
+    await page.screenshot({ path, fullPage: false });
+    console.log(`  Screenshot: ${path}`);
+  }
+  await context.close();
+}
+
 async function main() {
   await wakeServices();
   const only = process.argv[2];
-  const scenes = only ? config.scenes.filter((s) => s.id === only || s.id.startsWith(only)) : config.scenes;
-  console.log(`Recording ${scenes.length} scenes against ${BASE}`);
+  let scenes = only ? config.scenes.filter((s) => s.id === only || s.id.startsWith(only)) : config.scenes;
+  const webScenes = scenes.filter((s) => !s.mobile);
+  const mobileScenes = scenes.filter((s) => s.mobile);
+
+  console.log(`Recording ${webScenes.length} web + ${mobileScenes.length} mobile scenes against ${BASE}`);
   const browser = await chromium.launch({ headless: true });
-  for (const scene of scenes) {
+  for (const scene of webScenes) {
     await recordScene(browser, scene);
   }
+
+  if (mobileScenes.length > 0) {
+    process.env.MOBILE_URL = await startExpoWeb();
+    for (const scene of mobileScenes) {
+      await recordMobileScene(browser, scene);
+    }
+    await captureMobileScreenshots(browser);
+  }
+
   await browser.close();
   console.log('Recording complete.');
 }

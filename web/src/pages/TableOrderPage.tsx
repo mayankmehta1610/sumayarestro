@@ -94,7 +94,7 @@ export default function TableOrderPage() {
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 grid gap-3 sm:grid-cols-2">
           {(menuData?.items || []).filter((i: Record<string, unknown>) => i.is_available).map((item: Record<string, unknown>) => (
-            <button key={String(item.id)} onClick={() => addItem(item)} className="card text-left hover:ring-2 hover:ring-amber-warm/40 transition">
+            <button key={String(item.id)} data-testid="menu-item" onClick={() => addItem(item)} className="card text-left hover:ring-2 hover:ring-primary/40 transition">
               <div className="flex justify-between">
                 <div>
                   <p className="font-semibold">{String(item.name)}</p>

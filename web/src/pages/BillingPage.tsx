@@ -86,6 +86,7 @@ export default function BillingPage() {
             ) : unpaid.map((o: Record<string, unknown>) => (
               <button
                 key={String(o.id)}
+                data-testid="billing-order"
                 onClick={() => { setSelectedOrder(o); setBillPreview(null); setCouponCode(String(o.coupon_code || '')); }}
                 className={`w-full rounded-xl border p-4 text-left transition ${
                   selectedOrder?.id === o.id ? 'border-chili bg-chili/5' : 'border-amber-warm/20 hover:bg-amber-warm/5'
@@ -136,7 +137,7 @@ export default function BillingPage() {
                   );
                 })}
               </div>
-              <button onClick={() => payMutation.mutate()} disabled={payMutation.isPending} className="btn-primary w-full mb-2">
+              <button data-testid="collect-payment" onClick={() => payMutation.mutate()} disabled={payMutation.isPending} className="btn-primary w-full mb-2">
                 {payMutation.isPending ? 'Processing...' : `Collect ₹${Number(displayBill?.net_amount || selectedOrder.net_amount).toFixed(2)}`}
               </button>
               <button onClick={() => printMutation.mutate(String(selectedOrder.id))} className="btn-secondary w-full flex items-center justify-center gap-2">

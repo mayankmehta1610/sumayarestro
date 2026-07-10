@@ -3,7 +3,7 @@ import { DollarSign, ShoppingCart, Utensils, ChefHat, AlertTriangle, TrendingUp,
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { getDashboard, api } from '../lib/api';
 
-const COLORS = ['#F59E0B', '#DC2626', '#78350F', '#10B981'];
+const COLORS = ['#6366F1', '#F43F5E', '#10B981', '#F59E0B'];
 
 export default function DashboardPage() {
   const { data, isLoading } = useQuery({ queryKey: ['dashboard'], queryFn: getDashboard });
@@ -19,9 +19,9 @@ export default function DashboardPage() {
   if (isLoading) return <div className="p-12 text-center text-coffee/60">Loading dashboard from API...</div>;
 
   const stats = [
-    { label: "Today's Sales", value: `₹${data?.today_sales?.toLocaleString() || 0}`, icon: DollarSign, color: 'bg-amber-warm' },
-    { label: "Today's Orders", value: data?.today_orders || 0, icon: ShoppingCart, color: 'bg-chili' },
-    { label: 'Active Tables', value: `${data?.active_tables}/${data?.total_tables}`, icon: Utensils, color: 'bg-coffee' },
+    { label: "Today's Sales", value: `₹${data?.today_sales?.toLocaleString() || 0}`, icon: DollarSign, color: 'bg-primary' },
+    { label: "Today's Orders", value: data?.today_orders || 0, icon: ShoppingCart, color: 'bg-accent' },
+    { label: 'Active Tables', value: `${data?.active_tables}/${data?.total_tables}`, icon: Utensils, color: 'bg-indigo-400' },
     { label: 'Pending KOTs', value: data?.pending_kots || 0, icon: ChefHat, color: 'bg-orange-600' },
     { label: 'Low Stock Items', value: data?.low_stock_items || 0, icon: AlertTriangle, color: 'bg-red-500' },
   ];
