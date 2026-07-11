@@ -28,8 +28,22 @@ foreach ($scene in $config.scenes) {
     }
 
     Write-Host "Merging $id..."
+    $leadMs = 0
+    if ($scene.videoLeadInMs) { $leadMs = [int]$scene.videoLeadInMs }
+    elseif ($scene.audioLeadInMs) { $leadMs = [int]$scene.audioLeadInMs }
     $audioDur = [double](& ffprobe -v quiet -show_entries format=duration -of csv=p=0 $audio)
-    $filter = "[0:v]setpts=PTS-STARTPTS,fps=30,trim=duration=$audioDur,setpts=PTS-STARTPTS[v];[1:a]asetpts=PTS-STARTPTS[a]"
+    $totalDur = $audioDur + ($leadMs / 1000.0)
+    $trimSec = 0.0
+    $metaPath = Join-Path $ScenesDir "$id.meta.json"
+    if (Test-Path $metaPath) {
+        $meta = Get-Content $metaPath -Raw | ConvertFrom-Json
+        if ($meta.trimMs) { $trimSec = [math]::Max(0, [double]$meta.trimMs / 1000.0) }
+    }
+    if ($leadMs -gt 0) {
+        $filter = "[0:v]setpts=PTS-STARTPTS,fps=30,trim=start=$trimSec`:duration=$totalDur,setpts=PTS-STARTPTS[v];[1:a]adelay=${leadMs}|${leadMs},asetpts=PTS-STARTPTS,apad=whole_dur=$totalDur[a]"
+    } else {
+        $filter = "[0:v]setpts=PTS-STARTPTS,fps=30,trim=start=$trimSec`:duration=$audioDur,setpts=PTS-STARTPTS[v];[1:a]asetpts=PTS-STARTPTS[a]"
+    }
 
     $proc = Start-Process -FilePath "ffmpeg" -ArgumentList @(
         "-y", "-i", $video, "-i", $audio,

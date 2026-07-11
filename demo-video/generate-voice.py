@@ -1,4 +1,4 @@
-"""Generate narration audio for each demo scene using edge-tts."""
+"""Generate narration audio — pure speech only; silence added in assemble.ps1."""
 import asyncio
 import json
 import subprocess
@@ -13,16 +13,16 @@ except ImportError:
 
 ROOT = Path(__file__).parent
 OUT = ROOT / "output" / "audio"
-VOICE = "en-IN-NeerjaNeural"  # Clear Indian English female voice for sales demos
+VOICE = "en-IN-NeerjaNeural"
 
 
 async def generate_scene(scene: dict) -> Path:
     OUT.mkdir(parents=True, exist_ok=True)
     out_mp3 = OUT / f"{scene['id']}.mp3"
-    text = scene["narration"]
-    communicate = edge_tts.Communicate(text, VOICE, rate="-5%")
+    communicate = edge_tts.Communicate(scene["narration"], VOICE, rate="-5%")
     await communicate.save(str(out_mp3))
-    print(f"  Audio: {out_mp3}")
+    lead = scene.get("videoLeadInMs", scene.get("audioLeadInMs", 0))
+    print(f"  Audio: {out_mp3} (narration only; {lead}ms lead-in applied at assemble)")
     return out_mp3
 
 
